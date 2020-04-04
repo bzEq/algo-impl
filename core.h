@@ -1,3 +1,5 @@
+// Copyright (c) 2020 Kai Luo <gluokai@gmail.com>. All rights reserved.
+
 #include <assert.h>
 #include <functional>
 #include <iostream>
