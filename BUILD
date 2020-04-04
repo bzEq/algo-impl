@@ -1,0 +1,17 @@
+cc_test(
+    name='random_graph_test',
+    srcs=[
+        'random_graph_test.cc',
+        'core.h',
+    ],
+    copts=[
+        '-O3',
+        '-std=c++14',
+        '-march=native',
+    ],
+    linkopts=[
+        '-lgtest_main',
+        '-lgtest',
+        '-pthread',
+    ],
+)
