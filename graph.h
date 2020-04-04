@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <random>
@@ -46,12 +47,69 @@ inline std::unique_ptr<Graph> GenerateRandomGraph(size_t num_of_vertexes,
   while (c) {
     unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes,
              v = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes;
-    if (u == v) {
-      continue;
-    }
     if (g->AddEdge(u, v, is_directed)) {
       --c;
     }
   }
-  return std::move(g);
+  return g;
+}
+
+inline void SimpleIterativeDFS(const Graph &graph,
+                               std::vector<unsigned> *numbering) {
+  if (graph.adjacents.empty())
+    return;
+  unsigned n = 0;
+  const size_t size = graph.adjacents.size();
+  numbering->resize(size);
+  std::vector<bool> visited(size, false);
+  struct State {
+    unsigned u;
+    decltype(graph.adjacents[0].begin()) next;
+  };
+  std::function<void(unsigned)> DFS = [&](unsigned o) {
+    std::vector<State> dfs_stack;
+    dfs_stack.emplace_back(State{o, graph.adjacents[o].begin()});
+    while (!dfs_stack.empty()) {
+      State &s = dfs_stack.back();
+      if (!visited[s.u]) {
+        visited[s.u] = true;
+        (*numbering)[s.u] = n++;
+      }
+      for (; s.next != graph.adjacents[s.u].end(); ++s.next) {
+        if (!visited[*s.next])
+          break;
+      }
+      if (s.next == graph.adjacents[s.u].end()) {
+        dfs_stack.pop_back();
+        continue;
+      }
+      unsigned v = *s.next;
+      assert(v < size && !visited[v]);
+      dfs_stack.emplace_back(State{v, graph.adjacents[v].begin()});
+    }
+  };
+  for (unsigned u = 0; u < size; ++u)
+    if (!visited[u])
+      DFS(u);
+}
+
+inline void SimpleDFS(const Graph &graph, std::vector<unsigned> *numbering) {
+  if (graph.adjacents.empty())
+    return;
+  unsigned n = 0;
+  const size_t size = graph.adjacents.size();
+  numbering->resize(size);
+  std::vector<bool> visited(size, false);
+  std::function<void(unsigned)> DFS = [&](unsigned u) {
+    if (visited[u])
+      return;
+    visited[u] = true;
+    (*numbering)[u] = n++;
+    for (auto v : graph.adjacents[u]) {
+      DFS(v);
+    }
+  };
+  for (unsigned u = 0; u < size; ++u)
+    if (!visited[u])
+      DFS(u);
 }

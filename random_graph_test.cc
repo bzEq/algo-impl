@@ -3,12 +3,13 @@
 #include <iostream>
 
 int main() {
-  const unsigned n = 1000, m = n*(n-1);
+  const unsigned n = 100000, m = 10000000;
   auto g = GenerateRandomGraph(n, m, true);
-  unsigned c = 0;
+  std::vector<unsigned> INum, Num;
+  SimpleIterativeDFS(*g, &INum);
+  SimpleDFS(*g, &Num);
   for (unsigned i = 0; i < n; ++i) {
-    c += g->adjacents[i].size();
+    assert(INum[i] == Num[i]);
   }
-  assert(c == m);
   return 0;
 }
