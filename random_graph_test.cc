@@ -3,10 +3,12 @@
 #include <iostream>
 
 int main() {
-  const unsigned n = 100, m = 1000;
+  const unsigned n = 1000, m = n*(n-1);
   auto g = GenerateRandomGraph(n, m, true);
+  unsigned c = 0;
   for (unsigned i = 0; i < n; ++i) {
-    std::cout << g->adjacents[i].size() << "\n";
+    c += g->adjacents[i].size();
   }
+  assert(c == m);
   return 0;
 }
