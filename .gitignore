@@ -1,3 +1,4 @@
+bazel-*
 a.out
 *.o
 *.so
