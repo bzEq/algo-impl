@@ -3,3 +3,5 @@ a.out
 *.so
 *.bc
 *.ll
+core
+perf.data*
