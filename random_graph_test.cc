@@ -4,7 +4,7 @@
 
 int main() {
   const unsigned n = 10000, m = 1000000;
-  auto g = GenerateRandomControlGraph(n, m);
+  auto g = GenerateRandomControlFlowGraph(n, m);
   std::vector<unsigned> INum, Num;
   SimpleIterativeDFS(*g, &INum);
   SimpleDFS(*g, &Num);
