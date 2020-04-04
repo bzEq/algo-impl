@@ -3,8 +3,8 @@
 #include <iostream>
 
 int main() {
-  const unsigned n = 100000, m = 10000000;
-  auto g = GenerateRandomGraph(n, m, true);
+  const unsigned n = 10000, m = 1000000;
+  auto g = GenerateRandomControlGraph(n, m);
   std::vector<unsigned> INum, Num;
   SimpleIterativeDFS(*g, &INum);
   SimpleDFS(*g, &Num);

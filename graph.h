@@ -25,9 +25,12 @@ private:
 
 struct Graph {
   std::vector<std::unordered_set<unsigned>> adjacents;
-  Graph(size_t n) { adjacents.resize(n); }
+  const bool is_directed;
+  Graph(size_t n, bool is_directed = false) : is_directed(is_directed) {
+    adjacents.resize(n);
+  }
 
-  bool AddEdge(unsigned u, unsigned v, bool is_directed = false) {
+  bool AddEdge(unsigned u, unsigned v) {
     assert(u < adjacents.size() && v < adjacents.size() && "Invalid vertex id");
     auto res = adjacents[u].insert(v);
     if (!is_directed)
@@ -37,20 +40,41 @@ struct Graph {
 };
 
 inline std::unique_ptr<Graph> GenerateRandomGraph(size_t num_of_vertexes,
-                                                  size_t num_of_edges,
-                                                  bool is_directed = false) {
+                                                  size_t num_of_edges) {
   auto g = std::make_unique<Graph>(num_of_vertexes);
-  unsigned c = std::min(
-      num_of_edges, is_directed ? num_of_vertexes * (num_of_vertexes - 1)
-                                : num_of_vertexes * (num_of_vertexes - 1) / 2);
+  unsigned c =
+      std::min(num_of_edges, g->is_directed
+                                 ? num_of_vertexes * (num_of_vertexes - 1)
+                                 : num_of_vertexes * (num_of_vertexes - 1) / 2);
   Random rnd(time(nullptr));
   while (c) {
     unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes,
              v = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes;
-    if (g->AddEdge(u, v, is_directed)) {
+    if (g->AddEdge(u, v)) {
       --c;
     }
   }
+  return g;
+}
+
+inline std::unique_ptr<Graph> GenerateRandomControlGraph(size_t num_of_vertexes,
+                                                         size_t num_of_edges) {
+  auto g = std::make_unique<Graph>(num_of_vertexes, true);
+  if (!num_of_edges)
+    return g;
+  unsigned c =
+      std::min(num_of_edges - 1, (num_of_vertexes - 1) * (num_of_vertexes - 2));
+  Random rnd(time(nullptr));
+  while (c) {
+    unsigned u = std::max(1UL, static_cast<unsigned>(rnd.NextInt()) %
+                                   num_of_vertexes),
+             v = std::max(1UL, static_cast<unsigned>(rnd.NextInt()) %
+                                   num_of_vertexes);
+    if (g->AddEdge(u, v)) {
+      --c;
+    }
+  }
+  g->AddEdge(0, 1);
   return g;
 }
 
