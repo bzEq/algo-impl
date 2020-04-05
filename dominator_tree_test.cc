@@ -5,9 +5,10 @@
 
 struct DominatorTree {
   Graph *cfg;
-  const unsigned size;
+  const unsigned size, UNDEF;
   std::vector<unsigned> idom;
-  DominatorTree(Graph *graph) : cfg(graph), size(cfg->adjacents.size()) {
+  DominatorTree(Graph *graph)
+      : cfg(graph), size(cfg->adjacents.size()), UNDEF(cfg->adjacents.size()) {
     idom.resize(size);
   }
   void Calculate() {
@@ -15,7 +16,7 @@ struct DominatorTree {
     SimpleIterativeDFS(*cfg, &dfo, &rpo);
     idom[0] = 0;
     for (unsigned i = 1; i < size; ++i) {
-      idom[i] = size;
+      idom[i] = UNDEF;
     }
     auto Intersect = [&](unsigned u, unsigned v) {
       while (u != v) {
@@ -37,10 +38,10 @@ struct DominatorTree {
       unsigned u = worklist.back();
       worklist.pop_back();
       inqueue[u] = false;
-      assert(idom[u] != size);
+      assert(idom[u] != UNDEF);
       for (auto v : cfg->adjacents[u]) {
         unsigned new_idom = idom[v];
-        if (new_idom != size)
+        if (new_idom != UNDEF)
           new_idom = Intersect(new_idom, u);
         else
           new_idom = u;
