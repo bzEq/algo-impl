@@ -64,12 +64,14 @@ struct DominatorTree {
       for (const unsigned v : cfg->adjacents[u]) {
         if (idom[v] == UNDEF)
           continue;
-        unsigned nca = u == v ? idom[u] : CalculateNCA(u, v);
+        unsigned nca = CalculateNCA(u, v);
         unsigned w = u;
         while (w != nca) {
           df[w].insert(v);
           w = idom[w];
         }
+        if (w == v)
+          df[w].insert(v);
       }
     }
   }
@@ -167,8 +169,25 @@ TEST(DominatorTreeTest, SelfLoop) {
   EXPECT_TRUE(dt.df[0].empty());
   EXPECT_TRUE(dt.df[1].size() == 1);
   EXPECT_TRUE(dt.df[1].count(1));
-  EXPECT_TRUE(dt.df[2].size() == 1);  
+  EXPECT_TRUE(dt.df[2].size() == 1);
   EXPECT_TRUE(dt.df[2].count(2));
+}
+
+TEST(DominatorTreeTest, SimpleLoop) {
+  Graph g(4, true);
+  g.AddEdge(0, 1);
+  g.AddEdge(1, 2);
+  g.AddEdge(2, 1);
+  g.AddEdge(2, 3);
+  DominatorTree dt(&g);
+  dt.CalculateDT();
+  dt.CalculateDF();
+  EXPECT_TRUE(dt.df[0].empty());
+  EXPECT_TRUE(dt.df[1].size() == 1);
+  EXPECT_TRUE(dt.df[1].count(1));
+  EXPECT_TRUE(dt.df[2].size() == 1);
+  EXPECT_TRUE(dt.df[2].count(1));
+  EXPECT_TRUE(dt.df[3].empty());
 }
 
 TEST(DominatorTreeTest, RandomCFG) {
