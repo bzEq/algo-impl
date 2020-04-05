@@ -80,13 +80,14 @@ GenerateRandomControlFlowGraph(size_t num_of_vertexes, size_t num_of_edges) {
   return g;
 }
 
-inline void SimpleIterativeDFS(const Graph &graph,
-                               std::vector<unsigned> *numbering) {
+inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
+                               std::vector<unsigned> *rpo) {
   if (graph.adjacents.empty())
     return;
-  unsigned n = 0;
+  unsigned depth_first_order = 0, post_order = 0;
   const size_t size = graph.adjacents.size();
-  numbering->resize(size);
+  dfo->resize(size);
+  rpo->resize(size);
   std::vector<bool> visited(size, false);
   struct State {
     unsigned u;
@@ -99,7 +100,7 @@ inline void SimpleIterativeDFS(const Graph &graph,
       State &s = dfs_stack.back();
       if (!visited[s.u]) {
         visited[s.u] = true;
-        (*numbering)[s.u] = n++;
+        (*dfo)[s.u] = depth_first_order++;
       }
       for (; s.next != graph.adjacents[s.u].end(); ++s.next) {
         if (!visited[*s.next])
@@ -107,6 +108,9 @@ inline void SimpleIterativeDFS(const Graph &graph,
       }
       if (s.next == graph.adjacents[s.u].end()) {
         dfs_stack.pop_back();
+        assert(size >= post_order);
+        (*rpo)[s.u] = size - post_order;
+        ++post_order;
         continue;
       }
       unsigned v = *s.next;
@@ -119,21 +123,25 @@ inline void SimpleIterativeDFS(const Graph &graph,
       DFS(u);
 }
 
-inline void SimpleDFS(const Graph &graph, std::vector<unsigned> *numbering) {
+inline void SimpleDFS(const Graph &graph, std::vector<unsigned> *dfo,
+                      std::vector<unsigned> *rpo) {
   if (graph.adjacents.empty())
     return;
-  unsigned n = 0;
   const size_t size = graph.adjacents.size();
-  numbering->resize(size);
+  unsigned depth_first_order = 0, post_order = 0;
+  dfo->resize(size);
+  rpo->resize(size);
   std::vector<bool> visited(size, false);
   std::function<void(unsigned)> DFS = [&](unsigned u) {
     if (visited[u])
       return;
     visited[u] = true;
-    (*numbering)[u] = n++;
+    (*dfo)[u] = depth_first_order++;
     for (auto v : graph.adjacents[u]) {
       DFS(v);
     }
+    (*rpo)[u] = size - post_order;
+    ++post_order;
   };
   for (unsigned u = 0; u < size; ++u)
     if (!visited[u])
