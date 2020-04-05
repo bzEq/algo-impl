@@ -164,7 +164,10 @@ TEST(DominatorTreeTest, SelfLoop) {
   EXPECT_TRUE(dt.idom[1] == 0);
   EXPECT_TRUE(dt.idom[0] == 0);
   dt.CalculateDF();
+  EXPECT_TRUE(dt.df[0].empty());
+  EXPECT_TRUE(dt.df[1].size() == 1);
   EXPECT_TRUE(dt.df[1].count(1));
+  EXPECT_TRUE(dt.df[2].size() == 1);  
   EXPECT_TRUE(dt.df[2].count(2));
 }
 
