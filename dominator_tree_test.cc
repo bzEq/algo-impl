@@ -148,7 +148,7 @@ TEST(DominatorTreeTest, SelfLoop) {
 }
 
 TEST(DominatorTreeTest, RandomCFG) {
-  const unsigned n = 1000, m = 3000;
+  const unsigned n = 100000, m = 300000;
   auto g = GenerateRandomControlFlowGraph(n, m);
   DominatorTree dt(g.get());
   dt.Calculate();
