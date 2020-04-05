@@ -5,9 +5,12 @@ cc_test(
         'core.h',
     ],
     copts=[
-        '-O3',
         '-std=c++14',
+        '-O3',
         '-march=native',
+        '-Wall',
+        '-fno-rtti',
+        '-fno-exceptions',
     ],
     linkopts=[
         '-lgtest_main',
@@ -23,9 +26,12 @@ cc_test(
         'core.h',
     ],
     copts=[
-        '-O3',
         '-std=c++14',
+        '-O3',
         '-march=native',
+        '-Wall',
+        '-fno-rtti',
+        '-fno-exceptions',
     ],
     linkopts=[
         '-lgtest_main',
