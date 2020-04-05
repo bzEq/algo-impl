@@ -15,3 +15,21 @@ cc_test(
         '-pthread',
     ],
 )
+
+cc_test(
+    name='dominator_tree_test',
+    srcs=[
+        'dominator_tree_test.cc',
+        'core.h',
+    ],
+    copts=[
+        '-O3',
+        '-std=c++14',
+        '-march=native',
+    ],
+    linkopts=[
+        '-lgtest_main',
+        '-lgtest',
+        '-pthread',
+    ],
+)
