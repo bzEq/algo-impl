@@ -62,21 +62,15 @@ inline std::unique_ptr<Graph> GenerateRandomGraph(size_t num_of_vertexes,
 inline std::unique_ptr<Graph>
 GenerateRandomControlFlowGraph(size_t num_of_vertexes, size_t num_of_edges) {
   auto g = std::make_unique<Graph>(num_of_vertexes, true);
-  if (!num_of_edges)
-    return g;
-  unsigned c =
-      std::min(num_of_edges - 1, (num_of_vertexes - 1) * (num_of_vertexes - 1));
+  unsigned c = std::min(num_of_edges, num_of_vertexes * num_of_vertexes);
   Random rnd(time(nullptr));
   while (c) {
-    unsigned u = std::max(1UL, static_cast<unsigned>(rnd.NextInt()) %
-                                   num_of_vertexes),
-             v = std::max(1UL, static_cast<unsigned>(rnd.NextInt()) %
-                                   num_of_vertexes);
+    unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes,
+             v = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes;
     if (g->AddEdge(u, v)) {
       --c;
     }
   }
-  g->AddEdge(0, 1);
   return g;
 }
 
