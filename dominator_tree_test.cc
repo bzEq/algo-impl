@@ -91,6 +91,8 @@ TEST(DominatorTreeTest, Graph0) {
   EXPECT_TRUE(dt.idom[0] == 0);
 }
 
+// Based on the figure of
+// https://www.cs.princeton.edu/courses/archive/fall03/cs528/handouts/a%20fast%20algorithm%20for%20finding.pdf
 TEST(DominatorTreeTest, Tarjan79) {
   Graph g(13, true);
   g.AddEdge(0, 1);  // R->A
