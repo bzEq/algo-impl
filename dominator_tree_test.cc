@@ -147,4 +147,11 @@ TEST(DominatorTreeTest, SelfLoop) {
   EXPECT_TRUE(dt.idom[0] == 0);
 }
 
+TEST(DominatorTreeTest, RandomCFG) {
+  const unsigned n = 100000, m = 1000000;  
+  auto g = GenerateRandomControlFlowGraph(n, m);
+  DominatorTree dt(g.get());
+  dt.Calculate();
+}
+
 } // namespace
