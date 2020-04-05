@@ -6,32 +6,33 @@
 struct DominatorTree {
   Graph *cfg;
   const unsigned size, UNDEF;
-  std::vector<unsigned> idom;
+  std::vector<unsigned> idom, dfo, rpo;
+  std::vector<std::unordered_set<unsigned>> df;
+
   DominatorTree(Graph *graph)
       : cfg(graph), size(cfg->adjacents.size()), UNDEF(cfg->adjacents.size()) {
     idom.resize(size);
-  }
-  void Calculate() {
-    std::vector<unsigned> dfo, rpo;
+    df.resize(size);
     SimpleIterativeDFS(*cfg, &dfo, &rpo);
+  }
+
+  unsigned CalculateNCA(unsigned u, unsigned v) {
+    while (u != v) {
+      while (dfo[u] > dfo[v])
+        u = idom[u];
+      while (dfo[u] < dfo[v])
+        v = idom[v];
+    }
+    return u;
+  }
+
+  void CalculateDT() {
     idom[0] = 0;
     for (unsigned i = 1; i < size; ++i) {
       idom[i] = UNDEF;
     }
-    auto Intersect = [&](unsigned u, unsigned v) {
-      while (u != v) {
-        while (dfo[u] > dfo[v])
-          u = idom[u];
-        while (dfo[u] < dfo[v])
-          v = idom[v];
-      }
-      return u;
-    };
     std::vector<bool> inqueue(size, false);
     std::vector<unsigned> worklist;
-    // std::iota(worklist.begin(), worklist.end(), 0);
-    // std::sort(worklist.begin(), worklist.end(),
-    //           [](unsigned u, unsigned v) { return rpo[u] < rpo[v]; });
     worklist.push_back(0);
     inqueue[0] = true;
     while (!worklist.empty()) {
@@ -42,7 +43,7 @@ struct DominatorTree {
       for (auto v : cfg->adjacents[u]) {
         unsigned new_idom = idom[v];
         if (new_idom != UNDEF)
-          new_idom = Intersect(new_idom, u);
+          new_idom = CalculateNCA(new_idom, u);
         else
           new_idom = u;
         if (new_idom != idom[v]) {
@@ -51,6 +52,23 @@ struct DominatorTree {
             worklist.push_back(v);
             inqueue[v] = true;
           }
+        }
+      }
+    }
+  }
+
+  void CalculateDF() {
+    for (unsigned u = 0; u < size; ++u) {
+      if (idom[u] == UNDEF)
+        continue;
+      for (const unsigned v : cfg->adjacents[u]) {
+        if (idom[v] == UNDEF)
+          continue;
+        unsigned nca = u == v ? idom[u] : CalculateNCA(u, v);
+        unsigned w = u;
+        while (w != nca) {
+          df[w].insert(v);
+          w = idom[w];
         }
       }
     }
@@ -65,7 +83,7 @@ TEST(DominatorTreeTest, LinearGraph) {
   g.AddEdge(2, 3);
   g.AddEdge(3, 4);
   DominatorTree dt(&g);
-  dt.Calculate();
+  dt.CalculateDT();
   EXPECT_TRUE(dt.idom[4] == 3);
   EXPECT_TRUE(dt.idom[3] == 2);
   EXPECT_TRUE(dt.idom[2] == 1);
@@ -83,7 +101,7 @@ TEST(DominatorTreeTest, Graph0) {
   g.AddEdge(0, 4);
   g.AddEdge(4, 5);
   DominatorTree dt(&g);
-  dt.Calculate();
+  dt.CalculateDT();
   EXPECT_TRUE(dt.idom[5] == 0);
   EXPECT_TRUE(dt.idom[4] == 0);
   EXPECT_TRUE(dt.idom[3] == 1);
@@ -118,7 +136,7 @@ TEST(DominatorTreeTest, Tarjan79) {
   g.AddEdge(11, 0); // K->R
   g.AddEdge(12, 8); // L->H
   DominatorTree dt(&g);
-  dt.Calculate();
+  dt.CalculateDT();
   EXPECT_TRUE(dt.idom[0] == 0);  // R
   EXPECT_TRUE(dt.idom[1] == 0);  // A
   EXPECT_TRUE(dt.idom[2] == 0);  // B
@@ -141,17 +159,21 @@ TEST(DominatorTreeTest, SelfLoop) {
   g.AddEdge(1, 2);
   g.AddEdge(2, 2);
   DominatorTree dt(&g);
-  dt.Calculate();
+  dt.CalculateDT();
   EXPECT_TRUE(dt.idom[2] == 1);
   EXPECT_TRUE(dt.idom[1] == 0);
   EXPECT_TRUE(dt.idom[0] == 0);
+  dt.CalculateDF();
+  EXPECT_TRUE(dt.df[1].count(1));
+  EXPECT_TRUE(dt.df[2].count(2));
 }
 
 TEST(DominatorTreeTest, RandomCFG) {
   const unsigned n = 100000, m = 300000;
   auto g = GenerateRandomControlFlowGraph(n, m);
   DominatorTree dt(g.get());
-  dt.Calculate();
+  dt.CalculateDT();
+  dt.CalculateDF();
 }
 
 } // namespace
