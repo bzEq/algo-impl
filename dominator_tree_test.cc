@@ -31,26 +31,25 @@ struct DominatorTree {
     for (unsigned i = 1; i < size; ++i) {
       idom[i] = UNDEF;
     }
-    std::vector<bool> inqueue(size, false);
-    std::vector<unsigned> worklist;
-    worklist.push_back(0);
-    inqueue[0] = true;
-    while (!worklist.empty()) {
-      unsigned u = worklist.back();
-      worklist.pop_back();
-      inqueue[u] = false;
-      assert(idom[u] != UNDEF);
-      for (auto v : cfg->adjacents[u]) {
-        unsigned new_idom = idom[v];
-        if (new_idom != UNDEF)
-          new_idom = CalculateNCA(new_idom, u);
-        else
-          new_idom = u;
-        if (new_idom != idom[v]) {
-          idom[v] = new_idom;
-          if (!inqueue[v]) {
-            worklist.push_back(v);
-            inqueue[v] = true;
+    std::vector<unsigned> worklist(size);
+    std::iota(worklist.begin(), worklist.end(), 0);
+    std::sort(worklist.begin(), worklist.end(),
+              [this](unsigned u, unsigned v) { return rpo[u] < rpo[v]; });
+    bool changed = true;
+    while (changed) {
+      changed = false;
+      for (auto u : worklist) {
+        if (idom[u] == UNDEF)
+          continue;
+        for (auto v : cfg->adjacents[u]) {
+          unsigned new_idom = idom[v];
+          if (new_idom != UNDEF)
+            new_idom = CalculateNCA(new_idom, u);
+          else
+            new_idom = u;
+          if (new_idom != idom[v]) {
+            idom[v] = new_idom;
+            changed = true;
           }
         }
       }
