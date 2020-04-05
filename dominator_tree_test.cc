@@ -134,4 +134,16 @@ TEST(DominatorTreeTest, Tarjan79) {
   EXPECT_TRUE(dt.idom[12] == 4); // L
 }
 
+TEST(DominatorTreeTest, SelfLoop) {
+  Graph g(3, true);
+  g.AddEdge(0, 1);
+  g.AddEdge(1, 1);
+  g.AddEdge(1, 2);  
+  DominatorTree dt(&g);
+  dt.Calculate();
+  EXPECT_TRUE(dt.idom[2] == 1);
+  EXPECT_TRUE(dt.idom[1] == 0);
+  EXPECT_TRUE(dt.idom[0] == 0);
+}
+
 } // namespace
