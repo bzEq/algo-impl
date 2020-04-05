@@ -138,7 +138,8 @@ TEST(DominatorTreeTest, SelfLoop) {
   Graph g(3, true);
   g.AddEdge(0, 1);
   g.AddEdge(1, 1);
-  g.AddEdge(1, 2);  
+  g.AddEdge(1, 2);
+  g.AddEdge(2, 2);
   DominatorTree dt(&g);
   dt.Calculate();
   EXPECT_TRUE(dt.idom[2] == 1);
