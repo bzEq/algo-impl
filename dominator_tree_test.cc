@@ -6,14 +6,16 @@
 struct DominatorTree {
   const Graph *cfg;
   const unsigned size, UNDEF;
-  std::vector<unsigned> idom, dfo, rpo;
+  std::vector<unsigned> sdom, idom, dfo, rpo;
+  std::vector<unsigned> dfs_tree_parent;
   std::vector<std::unordered_set<unsigned>> df;
 
   DominatorTree(const Graph *graph)
       : cfg(graph), size(cfg->adjacents.size()), UNDEF(cfg->adjacents.size()) {
+    sdom.resize(size);
     idom.resize(size);
     df.resize(size);
-    SimpleIterativeDFS(*cfg, &dfo, &rpo);
+    SimpleIterativeDFS(*cfg, &dfo, &rpo, &dfs_tree_parent);
   }
 
   unsigned CalculateNCA(unsigned u, unsigned v) {
@@ -26,7 +28,7 @@ struct DominatorTree {
     return u;
   }
 
-  void CalculateDT() {
+  void CalculateDTViaDataFlow() {
     idom[0] = 0;
     for (unsigned i = 1; i < size; ++i) {
       idom[i] = UNDEF;
@@ -55,6 +57,11 @@ struct DominatorTree {
       }
     }
   }
+
+  // Lengauer-Tarjan algorithm.
+  void CalculateDTViaLT() {}
+
+  void CalculateDT() { CalculateDTViaDataFlow(); }
 
   void CalculateDF() {
     for (unsigned u = 0; u < size; ++u) {
