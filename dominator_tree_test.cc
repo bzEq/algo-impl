@@ -4,12 +4,12 @@
 #include <iostream>
 
 struct DominatorTree {
-  Graph *cfg;
+  const Graph *cfg;
   const unsigned size, UNDEF;
   std::vector<unsigned> idom, dfo, rpo;
   std::vector<std::unordered_set<unsigned>> df;
 
-  DominatorTree(Graph *graph)
+  DominatorTree(const Graph *graph)
       : cfg(graph), size(cfg->adjacents.size()), UNDEF(cfg->adjacents.size()) {
     idom.resize(size);
     df.resize(size);
