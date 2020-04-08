@@ -9,8 +9,8 @@ namespace {
 TEST(RandomGraphTest, DFS) {
   const unsigned n = 10000, m = 1000000;
   auto g = GenerateRandomControlFlowGraph(n, m);
-  std::vector<unsigned> idfs_dfo, idfs_rpo, dfs_dfo, dfs_rpo;
-  SimpleIterativeDFS(*g, &idfs_dfo, &idfs_rpo);
+  std::vector<unsigned> idfs_dfo, idfs_rpo, dfs_dfo, dfs_rpo, dfs_tree_parent;
+  SimpleIterativeDFS(*g, &idfs_dfo, &idfs_rpo, &dfs_tree_parent);
   SimpleDFS(*g, &dfs_dfo, &dfs_rpo);
   for (unsigned i = 0; i < n; ++i) {
     EXPECT_TRUE(idfs_rpo[i] == dfs_rpo[i]);

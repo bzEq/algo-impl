@@ -104,10 +104,10 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
           break;
       }
       if (s.next == graph.adjacents[s.u].end()) {
-        dfs_stack.pop_back();
         assert(size >= post_order);
         (*rpo)[s.u] = size - post_order;
         ++post_order;
+        dfs_stack.pop_back();
         continue;
       }
       unsigned v = *s.next;
