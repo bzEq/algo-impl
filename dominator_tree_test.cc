@@ -11,7 +11,7 @@ struct DominatorTree {
   std::vector<std::unordered_set<unsigned>> df;
 
   DominatorTree(const Graph *graph)
-      : cfg(graph), size(cfg->adjacents.size()), UNDEF(cfg->adjacents.size()) {
+      : cfg(graph), size(cfg->succ.size()), UNDEF(cfg->succ.size()) {
     sdom.resize(size);
     idom.resize(size);
     df.resize(size);
@@ -43,7 +43,7 @@ struct DominatorTree {
       for (auto u : worklist) {
         if (idom[u] == UNDEF)
           continue;
-        for (auto v : cfg->adjacents[u]) {
+        for (auto v : cfg->succ[u]) {
           unsigned new_idom = idom[v];
           if (new_idom != UNDEF)
             new_idom = CalculateNCA(new_idom, u);
@@ -67,7 +67,7 @@ struct DominatorTree {
     for (unsigned u = 0; u < size; ++u) {
       if (idom[u] == UNDEF)
         continue;
-      for (const unsigned v : cfg->adjacents[u]) {
+      for (const unsigned v : cfg->succ[u]) {
         if (idom[v] == UNDEF)
           continue;
         unsigned nca = CalculateNCA(u, v);

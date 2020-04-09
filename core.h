@@ -26,17 +26,21 @@ private:
 };
 
 struct Graph {
-  std::vector<std::unordered_set<unsigned>> adjacents;
+  std::vector<std::unordered_set<unsigned>> succ, pred;
   const bool is_directed;
   Graph(size_t n, bool is_directed = false) : is_directed(is_directed) {
-    adjacents.resize(n);
+    succ.resize(n);
+    pred.resize(n);
   }
 
   bool AddEdge(unsigned u, unsigned v) {
-    assert(u < adjacents.size() && v < adjacents.size() && "Invalid vertex id");
-    auto res = adjacents[u].insert(v);
-    if (!is_directed)
-      adjacents[v].insert(u);
+    assert(u < succ.size() && v < succ.size() && "Invalid vertex id");
+    auto res = succ[u].insert(v);
+    pred[v].insert(u);
+    if (!is_directed) {
+      succ[v].insert(u);
+      pred[u].insert(v);
+    }
     return std::get<1>(res);
   }
 };
@@ -77,10 +81,10 @@ GenerateRandomControlFlowGraph(size_t num_of_vertexes, size_t num_of_edges) {
 inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
                                std::vector<unsigned> *rpo,
                                std::vector<unsigned> *dfs_tree_parent) {
-  if (graph.adjacents.empty())
+  if (graph.succ.empty())
     return;
   unsigned depth_first_order = 0, post_order = 0;
-  const size_t size = graph.adjacents.size();
+  const size_t size = graph.succ.size();
   dfo->resize(size);
   rpo->resize(size);
   dfs_tree_parent->resize(size);
@@ -88,22 +92,22 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
   std::vector<bool> visited(size, false);
   struct State {
     unsigned u;
-    decltype(graph.adjacents[0].begin()) next;
+    decltype(graph.succ[0].begin()) next;
   };
   std::function<void(unsigned)> DFS = [&](unsigned o) {
     std::vector<State> dfs_stack;
-    dfs_stack.emplace_back(State{o, graph.adjacents[o].begin()});
+    dfs_stack.emplace_back(State{o, graph.succ[o].begin()});
     while (!dfs_stack.empty()) {
       State &s = dfs_stack.back();
       if (!visited[s.u]) {
         visited[s.u] = true;
         (*dfo)[s.u] = depth_first_order++;
       }
-      for (; s.next != graph.adjacents[s.u].end(); ++s.next) {
+      for (; s.next != graph.succ[s.u].end(); ++s.next) {
         if (!visited[*s.next])
           break;
       }
-      if (s.next == graph.adjacents[s.u].end()) {
+      if (s.next == graph.succ[s.u].end()) {
         assert(size >= post_order);
         (*rpo)[s.u] = size - post_order;
         ++post_order;
@@ -113,7 +117,7 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
       unsigned v = *s.next;
       assert(v < size && !visited[v]);
       (*dfs_tree_parent)[v] = s.u;
-      dfs_stack.emplace_back(State{v, graph.adjacents[v].begin()});
+      dfs_stack.emplace_back(State{v, graph.succ[v].begin()});
     }
   };
   for (unsigned u = 0; u < size; ++u)
@@ -123,9 +127,9 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
 
 inline void SimpleDFS(const Graph &graph, std::vector<unsigned> *dfo,
                       std::vector<unsigned> *rpo) {
-  if (graph.adjacents.empty())
+  if (graph.succ.empty())
     return;
-  const size_t size = graph.adjacents.size();
+  const size_t size = graph.succ.size();
   unsigned depth_first_order = 0, post_order = 0;
   dfo->resize(size);
   rpo->resize(size);
@@ -135,7 +139,7 @@ inline void SimpleDFS(const Graph &graph, std::vector<unsigned> *dfo,
       return;
     visited[u] = true;
     (*dfo)[u] = depth_first_order++;
-    for (auto v : graph.adjacents[u]) {
+    for (auto v : graph.succ[u]) {
       DFS(v);
     }
     (*rpo)[u] = size - post_order;
