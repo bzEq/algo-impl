@@ -8,13 +8,13 @@ struct DominatorTree {
   const unsigned size, UNDEF;
   std::vector<unsigned> sdom, idom, dfo, rpo;
   std::vector<unsigned> dfs_tree_parent;
-  std::vector<std::unordered_set<unsigned>> df;
+  std::vector<std::unordered_set<unsigned>> dominance_frontier;
 
   DominatorTree(const Graph *graph)
       : cfg(graph), size(cfg->succ.size()), UNDEF(cfg->succ.size()) {
     sdom.resize(size);
     idom.resize(size);
-    df.resize(size);
+    dominance_frontier.resize(size);
     SimpleIterativeDFS(*cfg, &dfo, &rpo, &dfs_tree_parent);
   }
 
@@ -73,11 +73,11 @@ struct DominatorTree {
         unsigned nca = CalculateNCA(u, v);
         unsigned w = u;
         while (w != nca) {
-          df[w].insert(v);
+          dominance_frontier[w].insert(v);
           w = idom[w];
         }
         if (w == v)
-          df[w].insert(v);
+          dominance_frontier[w].insert(v);
       }
     }
   }
@@ -172,11 +172,11 @@ TEST(DominatorTreeTest, SelfLoop) {
   EXPECT_TRUE(dt.idom[1] == 0);
   EXPECT_TRUE(dt.idom[0] == 0);
   dt.CalculateDF();
-  EXPECT_TRUE(dt.df[0].empty());
-  EXPECT_TRUE(dt.df[1].size() == 1);
-  EXPECT_TRUE(dt.df[1].count(1));
-  EXPECT_TRUE(dt.df[2].size() == 1);
-  EXPECT_TRUE(dt.df[2].count(2));
+  EXPECT_TRUE(dt.dominance_frontier[0].empty());
+  EXPECT_TRUE(dt.dominance_frontier[1].size() == 1);
+  EXPECT_TRUE(dt.dominance_frontier[1].count(1));
+  EXPECT_TRUE(dt.dominance_frontier[2].size() == 1);
+  EXPECT_TRUE(dt.dominance_frontier[2].count(2));
 }
 
 TEST(DominatorTreeTest, SimpleLoop) {
@@ -188,12 +188,12 @@ TEST(DominatorTreeTest, SimpleLoop) {
   DominatorTree dt(&g);
   dt.CalculateDT();
   dt.CalculateDF();
-  EXPECT_TRUE(dt.df[0].empty());
-  EXPECT_TRUE(dt.df[1].size() == 1);
-  EXPECT_TRUE(dt.df[1].count(1));
-  EXPECT_TRUE(dt.df[2].size() == 1);
-  EXPECT_TRUE(dt.df[2].count(1));
-  EXPECT_TRUE(dt.df[3].empty());
+  EXPECT_TRUE(dt.dominance_frontier[0].empty());
+  EXPECT_TRUE(dt.dominance_frontier[1].size() == 1);
+  EXPECT_TRUE(dt.dominance_frontier[1].count(1));
+  EXPECT_TRUE(dt.dominance_frontier[2].size() == 1);
+  EXPECT_TRUE(dt.dominance_frontier[2].count(1));
+  EXPECT_TRUE(dt.dominance_frontier[3].empty());
 }
 
 TEST(DominatorTreeTest, RandomCFG) {
