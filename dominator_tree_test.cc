@@ -96,9 +96,6 @@ struct DominatorTree {
 
   void CalculateDTViaDataFlow() {
     idom[0] = 0;
-    for (unsigned i = 1; i < size; ++i) {
-      idom[i] = UNDEF;
-    }
     std::vector<unsigned> worklist(size);
     std::iota(worklist.begin(), worklist.end(), 0);
     std::sort(worklist.begin(), worklist.end(),
