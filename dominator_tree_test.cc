@@ -49,7 +49,8 @@ struct DominatorTree {
     std::iota(worklist.begin(), worklist.end(), 1);
     std::sort(worklist.begin(), worklist.end(), dfs_greater);
     for (unsigned w : worklist) {
-      if (dfo[w] == UNDEF) continue;
+      if (dfo[w] == UNDEF)
+        continue;
       unsigned p = dfs_tree_parent[w], s = p;
       for (unsigned v : cfg->pred[w]) {
         if (v == w || dfs_less(v, w)) {
@@ -148,11 +149,17 @@ TEST(DominatorTreeTest, LinearGraph) {
   g.AddEdge(3, 4);
   DominatorTree dt(&g);
   dt.CalculateDTViaLT();
-  EXPECT_TRUE(dt.idom[4] == 3);
-  EXPECT_TRUE(dt.idom[3] == 2);
-  EXPECT_TRUE(dt.idom[2] == 1);
-  EXPECT_TRUE(dt.idom[1] == 0);
-  EXPECT_TRUE(dt.idom[0] == 0);
+  DominatorTree dt1(&g);
+  dt1.CalculateDTViaDataFlow();
+  auto check = [](DominatorTree &dt) {
+    EXPECT_TRUE(dt.idom[4] == 3);
+    EXPECT_TRUE(dt.idom[3] == 2);
+    EXPECT_TRUE(dt.idom[2] == 1);
+    EXPECT_TRUE(dt.idom[1] == 0);
+    EXPECT_TRUE(dt.idom[0] == 0);
+  };
+  check(dt);
+  check(dt1);
 }
 
 TEST(DominatorTreeTest, Graph0) {
@@ -166,12 +173,18 @@ TEST(DominatorTreeTest, Graph0) {
   g.AddEdge(4, 5);
   DominatorTree dt(&g);
   dt.CalculateDTViaLT();
-  EXPECT_TRUE(dt.idom[5] == 0);
-  EXPECT_TRUE(dt.idom[4] == 0);
-  EXPECT_TRUE(dt.idom[3] == 1);
-  EXPECT_TRUE(dt.idom[2] == 1);
-  EXPECT_TRUE(dt.idom[1] == 0);
-  EXPECT_TRUE(dt.idom[0] == 0);
+  DominatorTree dt1(&g);
+  dt1.CalculateDTViaDataFlow();
+  auto check = [](DominatorTree &dt) {
+    EXPECT_TRUE(dt.idom[5] == 0);
+    EXPECT_TRUE(dt.idom[4] == 0);
+    EXPECT_TRUE(dt.idom[3] == 1);
+    EXPECT_TRUE(dt.idom[2] == 1);
+    EXPECT_TRUE(dt.idom[1] == 0);
+    EXPECT_TRUE(dt.idom[0] == 0);
+  };
+  check(dt);
+  check(dt1);
 }
 
 // Based on the figure of
@@ -260,8 +273,12 @@ TEST(DominatorTreeTest, RandomCFG) {
   const unsigned n = 100000, m = 300000;
   auto g = GenerateRandomControlFlowGraph(n, m);
   DominatorTree dt(g.get());
+  DominatorTree dt1(g.get());
   dt.CalculateDTViaLT();
-  dt.CalculateDF();
+  dt1.CalculateDTViaDataFlow();
+  for (unsigned u = 0; u < n; ++u) {
+    EXPECT_TRUE(dt.idom[u] == dt1.idom[u]);
+  }
 }
 
 } // namespace
