@@ -43,7 +43,7 @@ struct DominatorTree {
   }
 
   bool NotReachableFromOrigin(unsigned w) {
-    return size - rpo[0] < size - rpo[w];
+    return (size - 1 - rpo[0]) < (size - 1 - rpo[w]);
   }
 
   // Lengaurer-Tarjan algorithm.
@@ -305,6 +305,7 @@ TEST(DominatorTreeTest, RandomCFG) {
   dt.CalculateDTViaLT();
   dt1.CalculateDTViaDataFlow();
   for (unsigned u = 0; u < n; ++u) {
+    // std::cout << dt.idom[u] << " " << dt1.idom[u] << "\n";
     EXPECT_TRUE(dt.idom[u] == dt1.idom[u]);
   }
 }

@@ -109,8 +109,8 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
           break;
       }
       if (s.next == graph.succ[s.u].end()) {
-        assert(size >= post_order);
-        (*rpo)[s.u] = size - post_order;
+        assert(size > post_order);
+        (*rpo)[s.u] = (size - 1) - post_order;
         ++post_order;
         dfs_stack.pop_back();
         continue;
@@ -143,7 +143,7 @@ inline void SimpleDFS(const Graph &graph, std::vector<unsigned> *dfo,
     for (auto v : graph.succ[u]) {
       DFS(v);
     }
-    (*rpo)[u] = size - post_order;
+    (*rpo)[u] = (size - 1) - post_order;
     ++post_order;
   };
   for (unsigned u = 0; u < size; ++u)
