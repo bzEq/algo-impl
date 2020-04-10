@@ -8,7 +8,7 @@ struct DominatorTree {
   const unsigned size, UNDEF;
   std::vector<unsigned> dfo, rpo, dfs_tree_parent, semi, idom, samedom,
       lt_ancestor, best;
-  std::vector<std::unordered_set<unsigned>> dominance_frontier, lt_bucket;
+  std::vector<std::set<unsigned>> dominance_frontier, lt_bucket;
   std::function<bool(unsigned, unsigned)> dfs_less, dfs_greater;
 
   DominatorTree(const Graph *graph)
@@ -26,12 +26,14 @@ struct DominatorTree {
 
   void Link(unsigned u, unsigned v) {
     assert(u != v);
+    assert(u != UNDEF);
     lt_ancestor[v] = u;
     best[v] = v;
   }
 
   unsigned Eval(unsigned v) {
     unsigned a = lt_ancestor[v];
+    assert(a != UNDEF);
     if (lt_ancestor[a] != UNDEF) {
       unsigned b = Eval(a);
       lt_ancestor[v] = lt_ancestor[a];
@@ -39,6 +41,7 @@ struct DominatorTree {
         best[v] = b;
       }
     }
+    assert(best[v] != UNDEF);
     return best[v];
   }
 
@@ -53,19 +56,20 @@ struct DominatorTree {
     std::iota(worklist.begin(), worklist.end(), 0);
     std::sort(worklist.begin(), worklist.end(), dfs_greater);
     for (unsigned w : worklist) {
-      if (NotReachableFromOrigin(w))
+      if (NotReachableFromOrigin(w) || dfs_tree_parent[w] == UNDEF)
         continue;
       unsigned p = dfs_tree_parent[w], s = p;
-      if (w == p)
-        continue;
       for (unsigned v : cfg->pred[w]) {
-        if (v == w || dfs_less(v, w)) {
+        if (NotReachableFromOrigin(v))
+          continue;
+        if (dfs_less(v, w)) {
           s = std::min(s, v, dfs_less);
-        } else {
+        } else if (dfs_greater(v, w)) {
           s = std::min(s, semi[Eval(v)], dfs_less);
         }
       }
       semi[w] = s;
+      assert(s < size);
       lt_bucket[s].insert(w);
       Link(p, w);
       for (unsigned v : lt_bucket[p]) {
@@ -86,9 +90,9 @@ struct DominatorTree {
 
   unsigned CalculateNCA(unsigned u, unsigned v) {
     while (u != v) {
-      while (dfo[u] > dfo[v])
+      while (dfs_greater(u, v))
         u = idom[u];
-      while (dfo[u] < dfo[v])
+      while (dfs_less(u, v))
         v = idom[v];
     }
     return u;
@@ -104,7 +108,7 @@ struct DominatorTree {
     while (changed) {
       changed = false;
       for (auto u : worklist) {
-        if (idom[u] == UNDEF)
+        if (NotReachableFromOrigin(u) || idom[u] == UNDEF)
           continue;
         for (auto v : cfg->succ[u]) {
           unsigned new_idom = idom[v];
@@ -264,7 +268,7 @@ TEST(DominatorTreeTest, SimpleLoop) {
   g.AddEdge(2, 1);
   g.AddEdge(2, 3);
   DominatorTree dt(&g);
-  EXPECT_TRUE(dt.dfs_tree_parent[0] == 0);
+  EXPECT_TRUE(dt.dfs_tree_parent[0] == dt.UNDEF);
   EXPECT_TRUE(dt.dfs_tree_parent[1] == 0);
   EXPECT_TRUE(dt.dfs_tree_parent[2] == 1);
   EXPECT_TRUE(dt.dfs_tree_parent[3] == 2);

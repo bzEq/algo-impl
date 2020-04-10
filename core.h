@@ -88,8 +88,8 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
   const unsigned UNDEF = size;
   dfo->resize(size, UNDEF);
   rpo->resize(size, UNDEF);
-  dfs_tree_parent->resize(size);
-  std::iota(dfs_tree_parent->begin(), dfs_tree_parent->end(), 0);
+  dfs_tree_parent->resize(size, UNDEF);
+  // std::iota(dfs_tree_parent->begin(), dfs_tree_parent->end(), 0);
   std::vector<bool> visited(size, false);
   struct State {
     unsigned u;
