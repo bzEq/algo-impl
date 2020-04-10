@@ -21,7 +21,7 @@ struct DominatorTree {
         dfs_greater([this](const unsigned u, const unsigned v) {
           return dfo[u] > dfo[v];
         }) {
-    SimpleIterativeDFS(*cfg, &dfo, &rpo, &dfs_tree_parent, true);
+    SimpleIterativeDFS(*cfg, &dfo, &rpo, &dfs_tree_parent);
   }
 
   void Link(unsigned u, unsigned v) {

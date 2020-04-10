@@ -80,8 +80,7 @@ GenerateRandomControlFlowGraph(size_t num_of_vertexes, size_t num_of_edges) {
 
 inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
                                std::vector<unsigned> *rpo,
-                               std::vector<unsigned> *dfs_tree_parent,
-                               bool single_source = false) {
+                               std::vector<unsigned> *dfs_tree_parent) {
   if (graph.succ.empty())
     return;
   unsigned depth_first_order = 0, post_order = 0;
@@ -122,12 +121,9 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
       dfs_stack.emplace_back(State{v, graph.succ[v].begin()});
     }
   };
-  if (single_source)
-    DFS(0);
-  else
-    for (unsigned u = 0; u < size; ++u)
-      if (!visited[u])
-        DFS(u);
+  for (unsigned u = 0; u < size; ++u)
+    if (!visited[u])
+      DFS(u);
 }
 
 inline void SimpleDFS(const Graph &graph, std::vector<unsigned> *dfo,
