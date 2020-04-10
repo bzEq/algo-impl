@@ -6,16 +6,75 @@
 struct DominatorTree {
   const Graph *cfg;
   const unsigned size, UNDEF;
-  std::vector<unsigned> sdom, idom, dfo, rpo;
-  std::vector<unsigned> dfs_tree_parent;
-  std::vector<std::unordered_set<unsigned>> dominance_frontier;
+  std::vector<unsigned> dfo, rpo, dfs_tree_parent, semi, idom, samedom,
+      lt_ancestor, best;
+  std::vector<std::unordered_set<unsigned>> dominance_frontier, lt_bucket;
+  std::function<bool(unsigned, unsigned)> dfs_less, dfs_greater;
 
   DominatorTree(const Graph *graph)
-      : cfg(graph), size(cfg->succ.size()), UNDEF(cfg->succ.size()) {
-    sdom.resize(size);
-    idom.resize(size);
-    dominance_frontier.resize(size);
-    SimpleIterativeDFS(*cfg, &dfo, &rpo, &dfs_tree_parent);
+      : cfg(graph), size(cfg->succ.size()), UNDEF(cfg->succ.size()),
+        semi(size, UNDEF), idom(size, UNDEF), samedom(size, UNDEF),
+        lt_ancestor(size, UNDEF), best(size, UNDEF), dominance_frontier(size),
+        lt_bucket(size), dfs_less([this](const unsigned u, const unsigned v) {
+          return dfo[u] < dfo[v];
+        }),
+        dfs_greater([this](const unsigned u, const unsigned v) {
+          return dfo[u] > dfo[v];
+        }) {
+    SimpleIterativeDFS(*cfg, &dfo, &rpo, &dfs_tree_parent, true);
+  }
+
+  void Link(unsigned u, unsigned v) {
+    assert(u != v);
+    lt_ancestor[v] = u;
+    best[v] = v;
+  }
+
+  unsigned Eval(unsigned v) {
+    unsigned a = lt_ancestor[v];
+    if (lt_ancestor[a] != UNDEF) {
+      unsigned b = Eval(a);
+      lt_ancestor[v] = lt_ancestor[a];
+      if (dfs_less(semi[b], semi[best[v]])) {
+        best[v] = b;
+      }
+    }
+    return best[v];
+  }
+
+  // Lengaurer-Tarjan algorithm.
+  void CalculateDTViaLT() {
+    idom[0] = 0;
+    std::vector<unsigned> worklist(size - 1);
+    std::iota(worklist.begin(), worklist.end(), 1);
+    std::sort(worklist.begin(), worklist.end(), dfs_greater);
+    for (unsigned w : worklist) {
+      if (dfo[w] == UNDEF) continue;
+      unsigned p = dfs_tree_parent[w], s = p;
+      for (unsigned v : cfg->pred[w]) {
+        if (v == w || dfs_less(v, w)) {
+          s = std::min(s, v, dfs_less);
+        } else {
+          s = std::min(s, semi[Eval(v)], dfs_less);
+        }
+      }
+      semi[w] = s;
+      lt_bucket[s].insert(w);
+      Link(p, w);
+      for (unsigned v : lt_bucket[p]) {
+        unsigned u = Eval(v);
+        if (semi[v] == semi[u])
+          idom[v] = p;
+        else
+          samedom[v] = u;
+      }
+      lt_bucket[p].clear();
+    }
+    std::sort(worklist.begin(), worklist.end(), dfs_less);
+    for (unsigned u : worklist) {
+      if (samedom[u] != UNDEF)
+        idom[u] = idom[samedom[u]];
+    }
   }
 
   unsigned CalculateNCA(unsigned u, unsigned v) {
@@ -88,7 +147,7 @@ TEST(DominatorTreeTest, LinearGraph) {
   g.AddEdge(2, 3);
   g.AddEdge(3, 4);
   DominatorTree dt(&g);
-  dt.CalculateDT();
+  dt.CalculateDTViaLT();
   EXPECT_TRUE(dt.idom[4] == 3);
   EXPECT_TRUE(dt.idom[3] == 2);
   EXPECT_TRUE(dt.idom[2] == 1);
@@ -106,7 +165,7 @@ TEST(DominatorTreeTest, Graph0) {
   g.AddEdge(0, 4);
   g.AddEdge(4, 5);
   DominatorTree dt(&g);
-  dt.CalculateDT();
+  dt.CalculateDTViaLT();
   EXPECT_TRUE(dt.idom[5] == 0);
   EXPECT_TRUE(dt.idom[4] == 0);
   EXPECT_TRUE(dt.idom[3] == 1);
@@ -141,7 +200,7 @@ TEST(DominatorTreeTest, Tarjan79) {
   g.AddEdge(11, 0); // K->R
   g.AddEdge(12, 8); // L->H
   DominatorTree dt(&g);
-  dt.CalculateDT();
+  dt.CalculateDTViaLT();
   EXPECT_TRUE(dt.idom[0] == 0);  // R
   EXPECT_TRUE(dt.idom[1] == 0);  // A
   EXPECT_TRUE(dt.idom[2] == 0);  // B
@@ -164,7 +223,7 @@ TEST(DominatorTreeTest, SelfLoop) {
   g.AddEdge(1, 2);
   g.AddEdge(2, 2);
   DominatorTree dt(&g);
-  dt.CalculateDT();
+  dt.CalculateDTViaLT();
   EXPECT_TRUE(dt.idom[2] == 1);
   EXPECT_TRUE(dt.idom[1] == 0);
   EXPECT_TRUE(dt.idom[0] == 0);
@@ -187,7 +246,7 @@ TEST(DominatorTreeTest, SimpleLoop) {
   EXPECT_TRUE(dt.dfs_tree_parent[1] == 0);
   EXPECT_TRUE(dt.dfs_tree_parent[2] == 1);
   EXPECT_TRUE(dt.dfs_tree_parent[3] == 2);
-  dt.CalculateDT();
+  dt.CalculateDTViaLT();
   dt.CalculateDF();
   EXPECT_TRUE(dt.dominance_frontier[0].empty());
   EXPECT_TRUE(dt.dominance_frontier[1].size() == 1);
@@ -201,7 +260,7 @@ TEST(DominatorTreeTest, RandomCFG) {
   const unsigned n = 100000, m = 300000;
   auto g = GenerateRandomControlFlowGraph(n, m);
   DominatorTree dt(g.get());
-  dt.CalculateDT();
+  dt.CalculateDTViaLT();
   dt.CalculateDF();
 }
 
