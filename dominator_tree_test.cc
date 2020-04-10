@@ -42,16 +42,22 @@ struct DominatorTree {
     return best[v];
   }
 
+  bool NotReachableFromOrigin(unsigned w) {
+    return size - rpo[0] < size - rpo[w];
+  }
+
   // Lengaurer-Tarjan algorithm.
   void CalculateDTViaLT() {
     idom[0] = 0;
-    std::vector<unsigned> worklist(size - 1);
-    std::iota(worklist.begin(), worklist.end(), 1);
+    std::vector<unsigned> worklist(size);
+    std::iota(worklist.begin(), worklist.end(), 0);
     std::sort(worklist.begin(), worklist.end(), dfs_greater);
     for (unsigned w : worklist) {
-      if (dfo[w] == UNDEF)
+      if (NotReachableFromOrigin(w))
         continue;
       unsigned p = dfs_tree_parent[w], s = p;
+      if (w == p)
+        continue;
       for (unsigned v : cfg->pred[w]) {
         if (v == w || dfs_less(v, w)) {
           s = std::min(s, v, dfs_less);
@@ -214,19 +220,25 @@ TEST(DominatorTreeTest, Tarjan79) {
   g.AddEdge(12, 8); // L->H
   DominatorTree dt(&g);
   dt.CalculateDTViaLT();
-  EXPECT_TRUE(dt.idom[0] == 0);  // R
-  EXPECT_TRUE(dt.idom[1] == 0);  // A
-  EXPECT_TRUE(dt.idom[2] == 0);  // B
-  EXPECT_TRUE(dt.idom[3] == 0);  // C
-  EXPECT_TRUE(dt.idom[4] == 0);  // D
-  EXPECT_TRUE(dt.idom[5] == 0);  // E
-  EXPECT_TRUE(dt.idom[6] == 3);  // F
-  EXPECT_TRUE(dt.idom[7] == 3);  // G
-  EXPECT_TRUE(dt.idom[8] == 0);  // H
-  EXPECT_TRUE(dt.idom[9] == 0);  // I
-  EXPECT_TRUE(dt.idom[10] == 7); // J
-  EXPECT_TRUE(dt.idom[11] == 0); // K
-  EXPECT_TRUE(dt.idom[12] == 4); // L
+  DominatorTree dt1(&g);
+  dt1.CalculateDTViaDataFlow();
+  auto check = [](DominatorTree &dt) {
+    EXPECT_TRUE(dt.idom[0] == 0);  // R
+    EXPECT_TRUE(dt.idom[1] == 0);  // A
+    EXPECT_TRUE(dt.idom[2] == 0);  // B
+    EXPECT_TRUE(dt.idom[3] == 0);  // C
+    EXPECT_TRUE(dt.idom[4] == 0);  // D
+    EXPECT_TRUE(dt.idom[5] == 0);  // E
+    EXPECT_TRUE(dt.idom[6] == 3);  // F
+    EXPECT_TRUE(dt.idom[7] == 3);  // G
+    EXPECT_TRUE(dt.idom[8] == 0);  // H
+    EXPECT_TRUE(dt.idom[9] == 0);  // I
+    EXPECT_TRUE(dt.idom[10] == 7); // J
+    EXPECT_TRUE(dt.idom[11] == 0); // K
+    EXPECT_TRUE(dt.idom[12] == 4); // L
+  };
+  check(dt);
+  check(dt1);
 }
 
 TEST(DominatorTreeTest, SelfLoop) {
@@ -267,6 +279,22 @@ TEST(DominatorTreeTest, SimpleLoop) {
   EXPECT_TRUE(dt.dominance_frontier[2].size() == 1);
   EXPECT_TRUE(dt.dominance_frontier[2].count(1));
   EXPECT_TRUE(dt.dominance_frontier[3].empty());
+}
+
+TEST(DominatorTreeTest, WeirdGraph) {
+  Graph g(4, true);
+  g.AddEdge(1, 0);
+  g.AddEdge(2, 0);
+  g.AddEdge(1, 2);
+  g.AddEdge(0, 3);
+  DominatorTree dt(&g);
+  DominatorTree dt1(&g);
+  dt.CalculateDTViaLT();
+  dt1.CalculateDTViaDataFlow();
+  for (unsigned u = 0; u < 4; ++u) {
+    // std::cout << dt.idom[u] << " " << dt1.idom[u] << "\n";
+    EXPECT_TRUE(dt.idom[u] == dt1.idom[u]);
+  }
 }
 
 TEST(DominatorTreeTest, RandomCFG) {
