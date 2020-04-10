@@ -194,6 +194,14 @@ TEST(DominatorTreeTest, Graph0) {
   check(dt1);
 }
 
+TEST(DominatorTreeTest, Graph1) {
+  Graph g(3, true);
+  g.AddEdge(0, 1);
+  g.AddEdge(1, 2);
+  DominatorTree dt(&g);
+  dt.CalculateDTViaLT();
+}
+
 // Based on the figure of
 // https://www.cs.princeton.edu/courses/archive/fall03/cs528/handouts/a%20fast%20algorithm%20for%20finding.pdf
 TEST(DominatorTreeTest, Tarjan79) {
