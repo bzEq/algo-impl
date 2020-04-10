@@ -58,9 +58,6 @@ struct DominatorTree {
     }
   }
 
-  // Lengauer-Tarjan algorithm.
-  void CalculateDTViaLT() {}
-
   void CalculateDT() { CalculateDTViaDataFlow(); }
 
   void CalculateDF() {
@@ -186,6 +183,10 @@ TEST(DominatorTreeTest, SimpleLoop) {
   g.AddEdge(2, 1);
   g.AddEdge(2, 3);
   DominatorTree dt(&g);
+  EXPECT_TRUE(dt.dfs_tree_parent[0] == 0);
+  EXPECT_TRUE(dt.dfs_tree_parent[1] == 0);
+  EXPECT_TRUE(dt.dfs_tree_parent[2] == 1);
+  EXPECT_TRUE(dt.dfs_tree_parent[3] == 2);
   dt.CalculateDT();
   dt.CalculateDF();
   EXPECT_TRUE(dt.dominance_frontier[0].empty());
