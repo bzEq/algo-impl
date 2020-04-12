@@ -5,8 +5,8 @@
 #include <iostream>
 #include <memory>
 #include <random>
-#include <time.h>
 #include <set>
+#include <time.h>
 #include <vector>
 
 class Random {
@@ -33,7 +33,7 @@ struct Graph {
     pred.resize(n);
   }
 
-  bool AddEdge(unsigned u, unsigned v) {
+  __attribute__((always_inline)) bool AddEdge(unsigned u, unsigned v) {
     assert(u < succ.size() && v < succ.size() && "Invalid vertex id");
     auto res = succ[u].insert(v);
     pred[v].insert(u);
@@ -78,7 +78,7 @@ GenerateRandomControlFlowGraph(size_t num_of_vertexes, size_t num_of_edges) {
   return g;
 }
 
-inline void IterativeDepthDirstVisit(
+__attribute__((always_inline)) void IterativeDepthDirstVisit(
     const Graph &graph,
     const std::function<void(unsigned parent, unsigned u)> &pre_visit,
     const std::function<void(unsigned u, unsigned v)> &non_tree_visit,
