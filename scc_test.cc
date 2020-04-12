@@ -67,7 +67,7 @@ struct SCC {
   }
 
   std::unique_ptr<Graph> DeriveDAG() {
-    auto dag = std::make_unique<Graph>(size, true);
+    auto dag = std::unique_ptr<Graph>(new Graph(size, true));
     for (unsigned u = 0; u < size; ++u) {
       unsigned U = lowest_ancestor[u];
       assert(lowest_ancestor[U] == U);
