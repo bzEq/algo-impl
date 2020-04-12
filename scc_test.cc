@@ -32,8 +32,7 @@ struct SCC {
     auto non_tree_visit = [&, this](unsigned u, unsigned v) {
       assert(dfo[u] != UNDEF && dfo[v] != UNDEF);
       if (instack[v])
-        lowest_ancestor[u] =
-            std::min(lowest_ancestor[u], lowest_ancestor[v], dfs_less);
+        lowest_ancestor[u] = std::min(lowest_ancestor[u], v, dfs_less);
     };
     auto post_visit = [&, this](unsigned u, unsigned parent) {
       if (parent != UNDEF) {
@@ -55,6 +54,31 @@ struct SCC {
       }
     };
     IterativeDepthDirstVisit(graph, pre_visit, non_tree_visit, post_visit);
+    // Compress lowest_ancestor.
+    std::function<unsigned(unsigned)> compress = [&, this](unsigned u) {
+      if (lowest_ancestor[u] == u)
+        return u;
+      unsigned lowest = compress(lowest_ancestor[u]);
+      lowest_ancestor[u] = lowest;
+      return lowest;
+    };
+    for (unsigned u = 0; u < size; ++u)
+      compress(u);
+  }
+
+  std::unique_ptr<Graph> DeriveDAG() {
+    auto dag = std::make_unique<Graph>(size, true);
+    for (unsigned u = 0; u < size; ++u) {
+      unsigned U = lowest_ancestor[u];
+      assert(lowest_ancestor[U] == U);
+      for (unsigned v : graph.succ[u]) {
+        unsigned V = lowest_ancestor[v];
+        assert(lowest_ancestor[V] == V);
+        if (U != V)
+          dag->AddEdge(U, V);
+      }
+    }
+    return dag;
   }
 };
 
@@ -93,11 +117,42 @@ TEST(SCCTest, Graph1) {
   EXPECT_TRUE(scc.sccs[scc.lowest_ancestor[0]].size() == 1);
 }
 
+TEST(SCCTest, DAGTest0) {
+  Graph g(6, true);
+  g.AddEdge(0, 1);
+  g.AddEdge(1, 2);
+  g.AddEdge(2, 3);
+  g.AddEdge(3, 4);
+  g.AddEdge(4, 1);
+  g.AddEdge(0, 5);
+  g.AddEdge(5, 4);
+  EXPECT_TRUE(not IsDAG(g));
+}
+
+TEST(SCCTest, DAGTest1) {
+  Graph g(7, true);
+  g.AddEdge(0, 1);
+  g.AddEdge(1, 2);
+  g.AddEdge(2, 3);
+  g.AddEdge(3, 4);
+  g.AddEdge(4, 5);
+  g.AddEdge(0, 5);
+  EXPECT_TRUE(IsDAG(g));
+}
+
 TEST(SCCTest, RandomCFG) {
   const unsigned n = 100000, m = 300000;
   auto g = GenerateRandomControlFlowGraph(n, m);
   SCC scc(*g);
   scc.Calculate();
+  for (unsigned u = 0; u < n; ++u) {
+    EXPECT_TRUE(u == scc.lowest_ancestor[u] ||
+                scc.dfs_less(scc.lowest_ancestor[u], u));
+    unsigned p = scc.lowest_ancestor[u];
+    EXPECT_TRUE(scc.lowest_ancestor[p] == p);
+  }
+  auto dag = scc.DeriveDAG();
+  EXPECT_TRUE(IsDAG(*dag));
 }
 
 } // namespace

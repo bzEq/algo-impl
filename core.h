@@ -97,6 +97,28 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
   IterativeDepthDirstVisit(graph, pre_visit, non_tree_visit, post_visit);
 }
 
+inline bool IsDAG(const Graph &graph) {
+  if (graph.succ.empty())
+    return false;
+  bool answer = true;
+  unsigned depth_first_order = 0, depth_post_order = 0;
+  const size_t size = graph.succ.size();
+  const unsigned UNDEF = size;
+  std::vector<unsigned> dfo(size, UNDEF), dpo(size, UNDEF);
+  auto non_tree_visit = [&](unsigned u, unsigned v) {
+    if (dfo[v] <= dfo[u] && dpo[v] == UNDEF)
+      answer = false;
+  };
+  auto pre_visit = [&](unsigned parent, unsigned u) {
+    dfo[u] = depth_first_order++;
+  };
+  auto post_visit = [&](unsigned u, unsigned parent) {
+    dpo[u] = depth_post_order++;
+  };
+  IterativeDepthDirstVisit(graph, pre_visit, non_tree_visit, post_visit);
+  return answer;
+}
+
 class Random {
 public:
   Random() : distribution_(0, 1) {}
