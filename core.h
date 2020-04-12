@@ -78,52 +78,67 @@ GenerateRandomControlFlowGraph(size_t num_of_vertexes, size_t num_of_edges) {
   return g;
 }
 
-inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
-                               std::vector<unsigned> *rpo,
-                               std::vector<unsigned> *dfs_tree_parent) {
+inline void IterativeDepthDirstVisit(
+    const Graph &graph,
+    const std::function<void(unsigned parent, unsigned u)> &pre_visit,
+    const std::function<void(unsigned u)> &post_visit) {
   if (graph.succ.empty())
     return;
-  unsigned depth_first_order = 0, post_order = 0;
   const size_t size = graph.succ.size();
   const unsigned UNDEF = size;
-  dfo->resize(size, UNDEF);
-  rpo->resize(size, UNDEF);
-  dfs_tree_parent->resize(size, UNDEF);
-  // std::iota(dfs_tree_parent->begin(), dfs_tree_parent->end(), 0);
   std::vector<bool> visited(size, false);
   struct State {
-    unsigned u;
+    unsigned parent, u;
     decltype(graph.succ[0].begin()) next;
   };
   std::function<void(unsigned)> DFS = [&](unsigned o) {
     std::vector<State> dfs_stack;
-    dfs_stack.emplace_back(State{o, graph.succ[o].begin()});
+    dfs_stack.emplace_back(State{UNDEF, o, graph.succ[o].begin()});
     while (!dfs_stack.empty()) {
       State &s = dfs_stack.back();
       if (!visited[s.u]) {
         visited[s.u] = true;
-        (*dfo)[s.u] = depth_first_order++;
+        pre_visit(s.parent, s.u);
       }
       for (; s.next != graph.succ[s.u].end(); ++s.next) {
         if (!visited[*s.next])
           break;
       }
       if (s.next == graph.succ[s.u].end()) {
-        assert(size > post_order);
-        (*rpo)[s.u] = (size - 1) - post_order;
-        ++post_order;
+        post_visit(s.u);
         dfs_stack.pop_back();
         continue;
       }
       unsigned v = *s.next;
       assert(v < size && !visited[v]);
-      (*dfs_tree_parent)[v] = s.u;
-      dfs_stack.emplace_back(State{v, graph.succ[v].begin()});
+      dfs_stack.emplace_back(State{s.u, v, graph.succ[v].begin()});
     }
   };
   for (unsigned u = 0; u < size; ++u)
     if (!visited[u])
       DFS(u);
+}
+
+inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
+                               std::vector<unsigned> *rpo,
+                               std::vector<unsigned> *dfs_tree_parent) {
+  if (graph.succ.empty())
+    return;
+  unsigned depth_first_order = 0, depth_post_order = 0;
+  const size_t size = graph.succ.size();
+  const unsigned UNDEF = size;
+  dfo->resize(size, UNDEF);
+  rpo->resize(size, UNDEF);
+  dfs_tree_parent->resize(size, UNDEF);
+  auto pre_visit = [&](unsigned parent, unsigned u) {
+    (*dfs_tree_parent)[u] = parent;
+    (*dfo)[u] = depth_first_order++;
+  };
+  auto post_visit = [&](unsigned u) {
+    (*rpo)[u] = (size - 1) - depth_post_order;
+    ++depth_post_order;
+  };
+  IterativeDepthDirstVisit(graph, pre_visit, post_visit);
 }
 
 inline void SimpleDFS(const Graph &graph, std::vector<unsigned> *dfo,
