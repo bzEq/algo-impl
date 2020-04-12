@@ -88,7 +88,14 @@ TEST(SCCTest, Graph1) {
   scc.Calculate();
   EXPECT_TRUE(scc.sccs[scc.lowest_ancestor[1]].size() == 4);
   EXPECT_TRUE(scc.sccs[scc.lowest_ancestor[5]].size() == 1);
-  EXPECT_TRUE(scc.sccs[scc.lowest_ancestor[0]].size() == 1);  
+  EXPECT_TRUE(scc.sccs[scc.lowest_ancestor[0]].size() == 1);
+}
+
+TEST(SCCTest, RandomCFG) {
+  const unsigned n = 100000, m = 300000;
+  auto g = GenerateRandomControlFlowGraph(n, m);
+  SCC scc(*g);
+  scc.Calculate();
 }
 
 } // namespace
