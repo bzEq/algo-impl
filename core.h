@@ -144,28 +144,3 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
   };
   IterativeDepthDirstVisit(graph, pre_visit, back_edge_visit, post_visit);
 }
-
-inline void SimpleDFS(const Graph &graph, std::vector<unsigned> *dfo,
-                      std::vector<unsigned> *rpo) {
-  if (graph.succ.empty())
-    return;
-  const size_t size = graph.succ.size();
-  unsigned depth_first_order = 0, post_order = 0;
-  dfo->resize(size);
-  rpo->resize(size);
-  std::vector<bool> visited(size, false);
-  std::function<void(unsigned)> DFS = [&](unsigned u) {
-    if (visited[u])
-      return;
-    visited[u] = true;
-    (*dfo)[u] = depth_first_order++;
-    for (auto v : graph.succ[u]) {
-      DFS(v);
-    }
-    (*rpo)[u] = (size - 1) - post_order;
-    ++post_order;
-  };
-  for (unsigned u = 0; u < size; ++u)
-    if (!visited[u])
-      DFS(u);
-}
