@@ -6,7 +6,7 @@
 #include <memory>
 #include <random>
 #include <time.h>
-#include <unordered_set>
+#include <set>
 #include <vector>
 
 class Random {
@@ -26,7 +26,7 @@ private:
 };
 
 struct Graph {
-  std::vector<std::unordered_set<unsigned>> succ, pred;
+  std::vector<std::set<unsigned>> succ, pred;
   const bool is_directed;
   Graph(size_t n, bool is_directed = false) : is_directed(is_directed) {
     succ.resize(n);
