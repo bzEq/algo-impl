@@ -9,22 +9,6 @@
 #include <time.h>
 #include <vector>
 
-class Random {
-public:
-  Random() : distribution_(0, 1) {}
-
-  explicit Random(int64_t seed) : generator_(seed), distribution_(0, 1) {}
-
-  double Next() { return distribution_(generator_); }
-
-  int64_t NextInt() { return int_distribution_(generator_); }
-
-private:
-  std::mt19937_64 generator_;
-  std::uniform_real_distribution<double> distribution_;
-  std::uniform_int_distribution<int64_t> int_distribution_;
-};
-
 struct Graph {
   std::vector<std::set<unsigned>> succ, pred;
   const bool is_directed;
@@ -44,39 +28,6 @@ struct Graph {
     return std::get<1>(res);
   }
 };
-
-inline std::unique_ptr<Graph> GenerateRandomGraph(size_t num_of_vertexes,
-                                                  size_t num_of_edges) {
-  auto g = std::make_unique<Graph>(num_of_vertexes);
-  unsigned c =
-      std::min(num_of_edges, g->is_directed
-                                 ? num_of_vertexes * (num_of_vertexes - 1)
-                                 : num_of_vertexes * (num_of_vertexes - 1) / 2);
-  Random rnd(time(nullptr));
-  while (c) {
-    unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes,
-             v = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes;
-    if (g->AddEdge(u, v)) {
-      --c;
-    }
-  }
-  return g;
-}
-
-inline std::unique_ptr<Graph>
-GenerateRandomControlFlowGraph(size_t num_of_vertexes, size_t num_of_edges) {
-  auto g = std::make_unique<Graph>(num_of_vertexes, true);
-  unsigned c = std::min(num_of_edges, num_of_vertexes * num_of_vertexes);
-  Random rnd(time(nullptr));
-  while (c) {
-    unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes,
-             v = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes;
-    if (g->AddEdge(u, v)) {
-      --c;
-    }
-  }
-  return g;
-}
 
 __attribute__((always_inline)) void IterativeDepthDirstVisit(
     const Graph &graph,
@@ -144,4 +95,53 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
     ++depth_post_order;
   };
   IterativeDepthDirstVisit(graph, pre_visit, non_tree_visit, post_visit);
+}
+
+class Random {
+public:
+  Random() : distribution_(0, 1) {}
+
+  explicit Random(int64_t seed) : generator_(seed), distribution_(0, 1) {}
+
+  double Next() { return distribution_(generator_); }
+
+  int64_t NextInt() { return int_distribution_(generator_); }
+
+private:
+  std::mt19937_64 generator_;
+  std::uniform_real_distribution<double> distribution_;
+  std::uniform_int_distribution<int64_t> int_distribution_;
+};
+
+inline std::unique_ptr<Graph> GenerateRandomGraph(size_t num_of_vertexes,
+                                                  size_t num_of_edges) {
+  auto g = std::make_unique<Graph>(num_of_vertexes);
+  unsigned c =
+      std::min(num_of_edges, g->is_directed
+                                 ? num_of_vertexes * (num_of_vertexes - 1)
+                                 : num_of_vertexes * (num_of_vertexes - 1) / 2);
+  Random rnd(time(nullptr));
+  while (c) {
+    unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes,
+             v = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes;
+    if (g->AddEdge(u, v)) {
+      --c;
+    }
+  }
+  return g;
+}
+
+inline std::unique_ptr<Graph>
+GenerateRandomControlFlowGraph(size_t num_of_vertexes, size_t num_of_edges) {
+  auto g = std::make_unique<Graph>(num_of_vertexes, true);
+  unsigned c = std::min(num_of_edges, num_of_vertexes * num_of_vertexes);
+  Random rnd(time(nullptr));
+  while (c) {
+    unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes,
+             v = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes;
+    if (g->AddEdge(u, v)) {
+      --c;
+    }
+  }
+  return g;
 }
