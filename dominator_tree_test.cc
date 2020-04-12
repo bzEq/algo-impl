@@ -4,15 +4,15 @@
 #include <iostream>
 
 struct DominatorTree {
-  const Graph *cfg;
+  const Graph &cfg;
   const unsigned size, UNDEF;
   std::vector<unsigned> dfo, rpo, dfs_tree_parent, semi, idom, samedom,
       lt_ancestor, best;
   std::vector<std::set<unsigned>> dominance_frontier, lt_bucket;
   std::function<bool(unsigned, unsigned)> dfs_less, dfs_greater;
 
-  DominatorTree(const Graph *graph)
-      : cfg(graph), size(cfg->succ.size()), UNDEF(cfg->succ.size()),
+  DominatorTree(const Graph &graph)
+      : cfg(graph), size(cfg.succ.size()), UNDEF(cfg.succ.size()),
         semi(size, UNDEF), idom(size, UNDEF), samedom(size, UNDEF),
         lt_ancestor(size, UNDEF), best(size, UNDEF), dominance_frontier(size),
         lt_bucket(size), dfs_less([this](const unsigned u, const unsigned v) {
@@ -21,7 +21,7 @@ struct DominatorTree {
         dfs_greater([this](const unsigned u, const unsigned v) {
           return dfo[u] > dfo[v];
         }) {
-    SimpleIterativeDFS(*cfg, &dfo, &rpo, &dfs_tree_parent);
+    SimpleIterativeDFS(cfg, &dfo, &rpo, &dfs_tree_parent);
   }
 
   void Link(unsigned u, unsigned v) {
@@ -59,7 +59,7 @@ struct DominatorTree {
       if (NotReachableFromOrigin(w) || dfs_tree_parent[w] == UNDEF)
         continue;
       unsigned p = dfs_tree_parent[w], s = p;
-      for (unsigned v : cfg->pred[w]) {
+      for (unsigned v : cfg.pred[w]) {
         if (NotReachableFromOrigin(v))
           continue;
         if (dfs_less(v, w)) {
@@ -110,7 +110,7 @@ struct DominatorTree {
       for (auto u : worklist) {
         if (NotReachableFromOrigin(u) || idom[u] == UNDEF)
           continue;
-        for (auto v : cfg->succ[u]) {
+        for (auto v : cfg.succ[u]) {
           unsigned new_idom = idom[v];
           if (new_idom != UNDEF)
             new_idom = CalculateNCA(new_idom, u);
@@ -131,7 +131,7 @@ struct DominatorTree {
     for (unsigned u = 0; u < size; ++u) {
       if (idom[u] == UNDEF)
         continue;
-      for (const unsigned v : cfg->succ[u]) {
+      for (const unsigned v : cfg.succ[u]) {
         if (idom[v] == UNDEF)
           continue;
         unsigned nca = CalculateNCA(u, v);
@@ -154,9 +154,9 @@ TEST(DominatorTreeTest, LinearGraph) {
   g.AddEdge(1, 2);
   g.AddEdge(2, 3);
   g.AddEdge(3, 4);
-  DominatorTree dt(&g);
+  DominatorTree dt(g);
   dt.CalculateDTViaLT();
-  DominatorTree dt1(&g);
+  DominatorTree dt1(g);
   dt1.CalculateDTViaDataFlow();
   auto check = [](DominatorTree &dt) {
     EXPECT_TRUE(dt.idom[4] == 3);
@@ -178,9 +178,9 @@ TEST(DominatorTreeTest, Graph0) {
   g.AddEdge(3, 5);
   g.AddEdge(0, 4);
   g.AddEdge(4, 5);
-  DominatorTree dt(&g);
+  DominatorTree dt(g);
   dt.CalculateDTViaLT();
-  DominatorTree dt1(&g);
+  DominatorTree dt1(g);
   dt1.CalculateDTViaDataFlow();
   auto check = [](DominatorTree &dt) {
     EXPECT_TRUE(dt.idom[5] == 0);
@@ -198,7 +198,7 @@ TEST(DominatorTreeTest, Graph1) {
   Graph g(3, true);
   g.AddEdge(0, 1);
   g.AddEdge(1, 2);
-  DominatorTree dt(&g);
+  DominatorTree dt(g);
   dt.CalculateDTViaLT();
 }
 
@@ -227,9 +227,9 @@ TEST(DominatorTreeTest, Tarjan79) {
   g.AddEdge(11, 9); // K->I
   g.AddEdge(11, 0); // K->R
   g.AddEdge(12, 8); // L->H
-  DominatorTree dt(&g);
+  DominatorTree dt(g);
   dt.CalculateDTViaLT();
-  DominatorTree dt1(&g);
+  DominatorTree dt1(g);
   dt1.CalculateDTViaDataFlow();
   auto check = [](DominatorTree &dt) {
     EXPECT_TRUE(dt.idom[0] == 0);  // R
@@ -256,7 +256,7 @@ TEST(DominatorTreeTest, SelfLoop) {
   g.AddEdge(1, 1);
   g.AddEdge(1, 2);
   g.AddEdge(2, 2);
-  DominatorTree dt(&g);
+  DominatorTree dt(g);
   dt.CalculateDTViaLT();
   EXPECT_TRUE(dt.idom[2] == 1);
   EXPECT_TRUE(dt.idom[1] == 0);
@@ -275,7 +275,7 @@ TEST(DominatorTreeTest, SimpleLoop) {
   g.AddEdge(1, 2);
   g.AddEdge(2, 1);
   g.AddEdge(2, 3);
-  DominatorTree dt(&g);
+  DominatorTree dt(g);
   EXPECT_TRUE(dt.dfs_tree_parent[0] == dt.UNDEF);
   EXPECT_TRUE(dt.dfs_tree_parent[1] == 0);
   EXPECT_TRUE(dt.dfs_tree_parent[2] == 1);
@@ -296,8 +296,8 @@ TEST(DominatorTreeTest, WeirdGraph) {
   g.AddEdge(2, 0);
   g.AddEdge(1, 2);
   g.AddEdge(0, 3);
-  DominatorTree dt(&g);
-  DominatorTree dt1(&g);
+  DominatorTree dt(g);
+  DominatorTree dt1(g);
   dt.CalculateDTViaLT();
   dt1.CalculateDTViaDataFlow();
   for (unsigned u = 0; u < 4; ++u) {
@@ -309,8 +309,8 @@ TEST(DominatorTreeTest, WeirdGraph) {
 TEST(DominatorTreeTest, RandomCFG) {
   const unsigned n = 100000, m = 300000;
   auto g = GenerateRandomControlFlowGraph(n, m);
-  DominatorTree dt(g.get());
-  DominatorTree dt1(g.get());
+  DominatorTree dt(*g);
+  DominatorTree dt1(*g);
   dt.CalculateDTViaLT();
   dt1.CalculateDTViaDataFlow();
   for (unsigned u = 0; u < n; ++u) {
