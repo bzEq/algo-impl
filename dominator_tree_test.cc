@@ -60,19 +60,19 @@ struct DominatorTree {
     for (unsigned w : worklist) {
       if (NotReachableFromOrigin(w) || dfs_tree_parent[w] == UNDEF)
         continue;
-      unsigned p = dfs_tree_parent[w], s = p;
+      const unsigned p = dfs_tree_parent[w];
+      semi[w] = p;
       for (unsigned v : cfg.pred[w]) {
         if (NotReachableFromOrigin(v))
           continue;
         if (dfs_less(v, w)) {
-          s = std::min(s, v, dfs_less);
+          semi[w] = std::min(semi[w], v, dfs_less);
         } else if (dfs_greater(v, w)) {
-          s = std::min(s, semi[Eval(v)], dfs_less);
+          semi[w] = std::min(semi[w], semi[Eval(v)], dfs_less);
         }
       }
-      semi[w] = s;
-      assert(s < size);
-      lt_bucket[s].insert(w);
+      assert(semi[w] < size);
+      lt_bucket[semi[w]].insert(w);
       Link(p, w);
       for (unsigned v : lt_bucket[p]) {
         unsigned u = Eval(v);
