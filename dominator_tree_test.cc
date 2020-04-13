@@ -8,16 +8,16 @@
 struct DominatorTree {
   const Graph &cfg;
   const unsigned size, UNDEF;
-  std::vector<unsigned> dfo, rpo, dfs_tree_parent, semi, idom, samedom,
-      lt_ancestor, best;
+  std::vector<unsigned> dfo, rpo, dfs_tree_parent, semi, idom, lt_ancestor,
+      best;
   std::vector<std::set<unsigned>> dominance_frontier, lt_bucket;
   std::function<bool(unsigned, unsigned)> dfs_less, dfs_greater;
 
   DominatorTree(const Graph &graph)
       : cfg(graph), size(cfg.succ.size()), UNDEF(cfg.succ.size()),
-        semi(size, UNDEF), idom(size, UNDEF), samedom(size, UNDEF),
-        lt_ancestor(size, UNDEF), best(size, UNDEF), dominance_frontier(size),
-        lt_bucket(size), dfs_less([this](const unsigned u, const unsigned v) {
+        semi(size, UNDEF), idom(size, UNDEF), lt_ancestor(size, UNDEF),
+        best(size, UNDEF), dominance_frontier(size), lt_bucket(size),
+        dfs_less([this](const unsigned u, const unsigned v) {
           return dfo[u] < dfo[v];
         }),
         dfs_greater([this](const unsigned u, const unsigned v) {
@@ -76,17 +76,19 @@ struct DominatorTree {
       Link(p, w);
       for (unsigned v : lt_bucket[p]) {
         unsigned u = Eval(v);
-        if (semi[v] == semi[u])
-          idom[v] = p;
+        if (dfs_less(semi[u], semi[v]))
+          idom[v] = u;
         else
-          samedom[v] = u;
+          idom[v] = semi[v];
       }
       lt_bucket[p].clear();
     }
     std::sort(worklist.begin(), worklist.end(), dfs_less);
-    for (unsigned u : worklist) {
-      if (samedom[u] != UNDEF)
-        idom[u] = idom[samedom[u]];
+    for (unsigned w : worklist) {
+      if (semi[w] != UNDEF && idom[w] != semi[w]) {
+        assert(idom[w] != UNDEF);
+        idom[w] = idom[idom[w]];
+      }
     }
   }
 
