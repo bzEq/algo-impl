@@ -129,7 +129,7 @@ struct DominatorTree {
     }
   }
 
-  void CalculateDT() { CalculateDTViaDataFlow(); }
+  void CalculateDT() { CalculateDTViaLT(); }
 
   void CalculateDF() {
     for (unsigned u = 0; u < size; ++u) {
