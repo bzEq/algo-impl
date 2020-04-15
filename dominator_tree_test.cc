@@ -48,7 +48,8 @@ struct DominatorTree {
   }
 
   bool NotReachableFromOrigin(unsigned w) {
-    return dfo[0] < dfo[w] && (size - 1 - rpo[0]) < (size - 1 - rpo[w]);
+    assert(dfo[0] != UNDEF && dfo[w] != UNDEF && dfo[0] <= dfo[w]);
+    return (size - 1 - rpo[0]) < (size - 1 - rpo[w]);
   }
 
   // Lengaurer-Tarjan algorithm.
