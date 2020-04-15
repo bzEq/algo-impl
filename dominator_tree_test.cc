@@ -73,8 +73,8 @@ struct DominatorTree {
         }
       }
       assert(semi[w] < size);
-      lt_bucket[semi[w]].insert(w);
       Link(p, w);
+      lt_bucket[semi[w]].insert(w);
       for (unsigned v : lt_bucket[p]) {
         unsigned u = Eval(v);
         if (dfs_less(semi[u], semi[v]))
