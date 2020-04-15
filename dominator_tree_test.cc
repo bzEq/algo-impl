@@ -47,9 +47,9 @@ struct DominatorTree {
     return best[v];
   }
 
-  bool NotReachableFromOrigin(unsigned w) {
+  bool ReachableFromOrigin(unsigned w) {
     assert(dfo[0] != UNDEF && dfo[w] != UNDEF && dfo[0] <= dfo[w]);
-    return (size - 1 - rpo[0]) < (size - 1 - rpo[w]);
+    return (size - 1 - rpo[0]) >= (size - 1 - rpo[w]);
   }
 
   // Lengaurer-Tarjan algorithm.
@@ -59,12 +59,12 @@ struct DominatorTree {
     std::iota(worklist.begin(), worklist.end(), 0);
     std::sort(worklist.begin(), worklist.end(), dfs_greater);
     for (unsigned w : worklist) {
-      if (NotReachableFromOrigin(w) || dfs_tree_parent[w] == UNDEF)
+      if (!ReachableFromOrigin(w) || dfs_tree_parent[w] == UNDEF)
         continue;
       const unsigned p = dfs_tree_parent[w];
       semi[w] = p;
       for (unsigned v : cfg.pred[w]) {
-        if (NotReachableFromOrigin(v))
+        if (!ReachableFromOrigin(v))
           continue;
         if (dfs_less(v, w)) {
           semi[w] = std::min(semi[w], v, dfs_less);
@@ -113,7 +113,7 @@ struct DominatorTree {
     while (changed) {
       changed = false;
       for (auto u : worklist) {
-        if (NotReachableFromOrigin(u) || idom[u] == UNDEF)
+        if (!ReachableFromOrigin(u) || idom[u] == UNDEF)
           continue;
         for (auto v : cfg.succ[u]) {
           unsigned new_idom = idom[v];
