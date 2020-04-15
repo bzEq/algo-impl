@@ -83,8 +83,8 @@ struct DominatorTree {
       }
       lt_bucket[p].clear();
     }
-    std::sort(worklist.begin(), worklist.end(), dfs_less);
-    for (unsigned w : worklist) {
+    for (auto it = worklist.rbegin(); it != worklist.rend(); ++it) {
+      unsigned w = *it;
       if (semi[w] != UNDEF && idom[w] != semi[w]) {
         assert(idom[w] != UNDEF);
         idom[w] = idom[idom[w]];
