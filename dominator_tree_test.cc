@@ -52,7 +52,7 @@ struct DominatorTree {
     return (size - 1 - rpo[0]) >= (size - 1 - rpo[w]);
   }
 
-  // Lengaurer-Tarjan algorithm.
+  // Lengauer-Tarjan algorithm.
   void CalculateDTViaLT() {
     idom[0] = 0;
     std::vector<unsigned> worklist(size);
