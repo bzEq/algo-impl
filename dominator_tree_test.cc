@@ -27,8 +27,7 @@ struct DominatorTree {
   }
 
   void Link(unsigned u, unsigned v) {
-    assert(u != v);
-    assert(u != UNDEF);
+    assert(u != UNDEF && v != UNDEF && dfo[u] < dfo[v]);
     lt_ancestor[v] = u;
     best[v] = v;
   }
