@@ -60,3 +60,24 @@ cc_test(
         '-pthread',
     ],
 )
+
+cc_test(
+    name='lca_test',
+    srcs=[
+        'lca_test.cc',
+        'core.h',
+    ],
+    copts=[
+        '-std=c++14',
+        '-O3',
+        '-march=native',
+        '-Wall',
+        '-fno-rtti',
+        '-fno-exceptions',
+    ],
+    linkopts=[
+        '-lgtest_main',
+        '-lgtest',
+        '-pthread',
+    ],
+)
