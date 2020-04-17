@@ -54,7 +54,10 @@ struct SCC {
       }
     };
     IterativeDepthDirstVisit(graph, pre_visit, non_tree_visit, post_visit);
-    // Compress lowest_ancestor.
+    CompressLowestAncestor();
+  }
+
+  void CompressLowestAncestor() {
     std::function<unsigned(unsigned)> compress = [&, this](unsigned u) {
       if (lowest_ancestor[u] == u)
         return u;
@@ -62,8 +65,10 @@ struct SCC {
       lowest_ancestor[u] = lowest;
       return lowest;
     };
-    for (unsigned u = 0; u < size; ++u)
+    for (unsigned u = 0; u < size; ++u) {
+      assert(lowest_ancestor[u] != UNDEF);
       compress(u);
+    }
   }
 
   std::unique_ptr<Graph> DeriveDAG() {
