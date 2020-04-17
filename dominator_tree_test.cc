@@ -313,7 +313,7 @@ TEST(DominatorTreeTest, WeirdGraph) {
 
 TEST(DominatorTreeTest, RandomCFG) {
   const unsigned n = 100000, m = 300000;
-  auto g = GenerateRandomControlFlowGraph(n, m);
+  auto g = GenerateRandomDirectedGraph(n, m);
   DominatorTree dt(*g);
   DominatorTree dt1(*g);
   dt.CalculateDTViaLT();

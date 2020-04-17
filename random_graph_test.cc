@@ -8,7 +8,7 @@ namespace {
 
 TEST(RandomGraphTest, DFS) {
   const unsigned n = 10000, m = 1000000;
-  auto g = GenerateRandomControlFlowGraph(n, m);
+  auto g = GenerateRandomDirectedGraph(n, m);
   std::vector<unsigned> rpo, dfo, dfs_tree_parent;
   SimpleIterativeDFS(*g, &dfo, &rpo, &dfs_tree_parent);
 }

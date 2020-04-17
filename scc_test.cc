@@ -147,7 +147,7 @@ TEST(SCCTest, DAGTest1) {
 
 TEST(SCCTest, RandomCFG) {
   const unsigned n = 100000, m = 300000;
-  auto g = GenerateRandomControlFlowGraph(n, m);
+  auto g = GenerateRandomDirectedGraph(n, m);
   SCC scc(*g);
   scc.Calculate();
   for (unsigned u = 0; u < n; ++u) {

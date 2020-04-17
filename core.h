@@ -154,7 +154,7 @@ inline std::unique_ptr<Graph> GenerateRandomGraph(size_t num_of_vertexes,
 }
 
 inline std::unique_ptr<Graph>
-GenerateRandomControlFlowGraph(size_t num_of_vertexes, size_t num_of_edges) {
+GenerateRandomDirectedGraph(size_t num_of_vertexes, size_t num_of_edges) {
   auto g = std::make_unique<Graph>(num_of_vertexes, true);
   unsigned c = std::min(num_of_edges, num_of_vertexes * num_of_vertexes);
   Random rnd(time(nullptr));
