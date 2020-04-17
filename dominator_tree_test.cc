@@ -76,8 +76,9 @@ struct DominatorTree {
       Link(p, w);
       lt_bucket[semi[w]].insert(w);
       for (unsigned v : lt_bucket[p]) {
+        assert(semi[v] == p);
         unsigned u = Eval(v);
-        if (dfs_less(semi[u], semi[v]))
+        if (dfs_less(semi[u], p))
           idom[v] = u;
         else
           idom[v] = semi[v];
