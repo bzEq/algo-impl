@@ -14,10 +14,9 @@ struct DominatorTree {
   std::function<bool(unsigned, unsigned)> dfs_less, dfs_greater;
 
   DominatorTree(const Graph &graph)
-      : cfg(graph), size(cfg.succ.size()), semi(size, UNDEF),
-        idom(size, UNDEF), lt_ancestor(size, UNDEF),
-        best(size, UNDEF), dominance_frontier(size), lt_bucket(size),
-        dfs_less([this](const unsigned u, const unsigned v) {
+      : cfg(graph), size(cfg.succ.size()), semi(size, UNDEF), idom(size, UNDEF),
+        lt_ancestor(size, UNDEF), best(size, UNDEF), dominance_frontier(size),
+        lt_bucket(size), dfs_less([this](const unsigned u, const unsigned v) {
           return dfo[u] < dfo[v];
         }),
         dfs_greater([this](const unsigned u, const unsigned v) {
@@ -47,8 +46,7 @@ struct DominatorTree {
   }
 
   bool ReachableFromOrigin(unsigned w) {
-    assert(dfo[0] != UNDEF && dfo[w] != UNDEF &&
-           dfo[0] <= dfo[w]);
+    assert(dfo[0] != UNDEF && dfo[w] != UNDEF && dfo[0] <= dfo[w]);
     return (size - 1 - rpo[0]) >= (size - 1 - rpo[w]);
   }
 
