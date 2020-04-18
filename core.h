@@ -120,6 +120,18 @@ inline bool IsDAG(const Graph &graph) {
   return answer;
 }
 
+inline std::unique_ptr<Graph> DeriveDFSTree(const Graph &graph) {
+  auto tree = std::unique_ptr<Graph>(new Graph(graph.succ.size()));
+  auto pre_visit = [&](unsigned parent, unsigned u) {
+    if (parent != graph.succ.size())
+      tree->AddEdge(parent, u);
+  };
+  auto non_tree_visit = [&](unsigned u, unsigned v) {};
+  auto post_visit = [&](unsigned u, unsigned parent) {};
+  IterativeDepthDirstVisit(graph, pre_visit, non_tree_visit, post_visit);
+  return tree;
+}
+
 class Random {
 public:
   Random() : distribution_(0, 1) {}
