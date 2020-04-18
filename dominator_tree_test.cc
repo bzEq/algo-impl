@@ -52,8 +52,8 @@ struct DominatorTree {
     return (size - 1 - rpo[0]) >= (size - 1 - rpo[w]);
   }
 
-  // Lengauer-Tarjan algorithm.
-  void CalculateDTViaLT() {
+  // Simple Lengauer-Tarjan algorithm.
+  void CalculateDTViaSLT() {
     idom[0] = 0;
     std::vector<unsigned> worklist(size);
     std::iota(worklist.begin(), worklist.end(), 0);
@@ -131,7 +131,7 @@ struct DominatorTree {
     }
   }
 
-  void CalculateDT() { CalculateDTViaLT(); }
+  void CalculateDT() { CalculateDTViaSLT(); }
 
   void CalculateDF() {
     for (unsigned u = 0; u < size; ++u) {
@@ -161,7 +161,7 @@ TEST(DominatorTreeTest, LinearGraph) {
   g.AddEdge(2, 3);
   g.AddEdge(3, 4);
   DominatorTree dt(g);
-  dt.CalculateDTViaLT();
+  dt.CalculateDTViaSLT();
   DominatorTree dt1(g);
   dt1.CalculateDTViaDataFlow();
   auto check = [](DominatorTree &dt) {
@@ -185,7 +185,7 @@ TEST(DominatorTreeTest, Graph0) {
   g.AddEdge(0, 4);
   g.AddEdge(4, 5);
   DominatorTree dt(g);
-  dt.CalculateDTViaLT();
+  dt.CalculateDTViaSLT();
   DominatorTree dt1(g);
   dt1.CalculateDTViaDataFlow();
   auto check = [](DominatorTree &dt) {
@@ -205,7 +205,7 @@ TEST(DominatorTreeTest, Graph1) {
   g.AddEdge(0, 1);
   g.AddEdge(1, 2);
   DominatorTree dt(g);
-  dt.CalculateDTViaLT();
+  dt.CalculateDTViaSLT();
 }
 
 // Based on the figure of
@@ -234,7 +234,7 @@ TEST(DominatorTreeTest, Tarjan79) {
   g.AddEdge(11, 0); // K->R
   g.AddEdge(12, 8); // L->H
   DominatorTree dt(g);
-  dt.CalculateDTViaLT();
+  dt.CalculateDTViaSLT();
   DominatorTree dt1(g);
   dt1.CalculateDTViaDataFlow();
   auto check = [](DominatorTree &dt) {
@@ -263,7 +263,7 @@ TEST(DominatorTreeTest, SelfLoop) {
   g.AddEdge(1, 2);
   g.AddEdge(2, 2);
   DominatorTree dt(g);
-  dt.CalculateDTViaLT();
+  dt.CalculateDTViaSLT();
   EXPECT_TRUE(dt.idom[2] == 1);
   EXPECT_TRUE(dt.idom[1] == 0);
   EXPECT_TRUE(dt.idom[0] == 0);
@@ -286,7 +286,7 @@ TEST(DominatorTreeTest, SimpleLoop) {
   EXPECT_TRUE(dt.dfs_tree_parent[1] == 0);
   EXPECT_TRUE(dt.dfs_tree_parent[2] == 1);
   EXPECT_TRUE(dt.dfs_tree_parent[3] == 2);
-  dt.CalculateDTViaLT();
+  dt.CalculateDTViaSLT();
   dt.CalculateDF();
   EXPECT_TRUE(dt.dominance_frontier[0].empty());
   EXPECT_TRUE(dt.dominance_frontier[1].size() == 1);
@@ -304,7 +304,7 @@ TEST(DominatorTreeTest, WeirdGraph) {
   g.AddEdge(0, 3);
   DominatorTree dt(g);
   DominatorTree dt1(g);
-  dt.CalculateDTViaLT();
+  dt.CalculateDTViaSLT();
   dt1.CalculateDTViaDataFlow();
   for (unsigned u = 0; u < 4; ++u) {
     // std::cout << dt.idom[u] << " " << dt1.idom[u] << "\n";
@@ -317,7 +317,7 @@ TEST(DominatorTreeTest, RandomCFG) {
   auto g = GenerateRandomDirectedGraph(n, m);
   DominatorTree dt(*g);
   DominatorTree dt1(*g);
-  dt.CalculateDTViaLT();
+  dt.CalculateDTViaSLT();
   dt1.CalculateDTViaDataFlow();
   for (unsigned u = 0; u < n; ++u) {
     // std::cout << dt.idom[u] << " " << dt1.idom[u] << "\n";
