@@ -95,7 +95,7 @@ struct LCA {
     }
     if (v == label[0])
       return v;
-    for (int i = ancestor[u].size() - 1; i >= 0; --i) {
+    for (unsigned i = ancestor[u].size() - 1; i != ~0U; --i) {
       if (height[u] == height[v])
         break;
       if (i >= ancestor[u].size())
@@ -108,7 +108,7 @@ struct LCA {
       return u;
     assert(height[u] == height[v]);
     assert(ancestor[u].size() == ancestor[v].size());
-    for (int i = ancestor[u].size() - 1; i >= 0; --i) {
+    for (unsigned i = ancestor[u].size() - 1; i != ~0U; --i) {
       if (ancestor[u][i] != ancestor[v][i]) {
         u = ancestor[u][i];
         v = ancestor[v][i];
