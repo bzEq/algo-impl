@@ -38,12 +38,14 @@ struct LCA {
     IterativeDepthDirstVisit(graph, pre_visit, non_tree_visit, post_visit);
     const unsigned MAX_ORDER = Log2Ceil(size);
     for (unsigned u = 0; u < size; ++u) {
-      if (height[u] != 0 && height[u] != UNDEF)
+      if (Covers(label[0], u) && height[u] != 0 && height[u] != UNDEF)
         ancestor[u].resize(Log2Ceil(height[u]) + 1, label[0]);
     }
     for (unsigned o = 0; o < MAX_ORDER; ++o) {
       for (unsigned dfn = 0; dfn < size; ++dfn) {
         unsigned u = label[dfn];
+        if (!Covers(label[0], u))
+          continue;
         if (o == 0) {
           if (tree_parent[u] != UNDEF && 0 < ancestor[u].size()) {
             ancestor[u][0] = tree_parent[u];
@@ -63,32 +65,30 @@ struct LCA {
     return dfo[u].begin <= dfo[v].begin && dfo[v].begin <= dfo[u].end;
   }
 
-  unsigned GetAncestor(unsigned u, unsigned distance) {
+  unsigned GetAncestor(unsigned u, const unsigned distance) {
     if (distance == 0)
       return u;
-    unsigned o = Log2Ceil(distance);
-    if (o >= ancestor[u].size())
-      return label[0];
+    unsigned o = Log2Floor(distance);
+    assert(o < ancestor[u].size());
     return GetAncestor(ancestor[u][o], distance - (1 << o));
   }
 
   unsigned GetLCA(unsigned u, unsigned v) {
     assert(u < size && v < size);
+    if (!Covers(label[0], u) || !Covers(label[0], v))
+      return UNDEF;
+    assert(height[u] != UNDEF && height[v] != UNDEF);
     if (height[u] < height[v]) {
       std::swap(u, v);
     }
-    unsigned distance = height[u] - height[v];
-    u = GetAncestor(u, distance);
-    assert(height[u] == height[v]);
-    assert(ancestor[u].size() == ancestor[v].size());
+    if (v == label[0])
+      return v;
+    u = GetAncestor(u, height[u] - height[v]);
     if (u == v)
       return u;
-    unsigned o = ancestor[u].size();
-    for (int i = o - 1; i >= 0; --i) {
-      if (height[ancestor[u][i]] >= height[v])
-        u = ancestor[u][i];
-    }
-    o = ancestor[u].size();
+    assert(height[u] == height[v]);
+    assert(ancestor[u].size() == ancestor[v].size());
+    const unsigned o = ancestor[u].size();
     for (int i = o - 1; i >= 0; --i) {
       if (ancestor[u][i] != ancestor[v][i]) {
         u = ancestor[u][i];
@@ -138,4 +138,15 @@ TEST(LCATest, Simple) {
   EXPECT_TRUE(lca.ancestor[3].back() == 0);
   EXPECT_TRUE(lca.ancestor[6].back() == 0);
   EXPECT_TRUE(lca.GetLCA(3, 6) == 0);
+}
+
+TEST(LCATest, Random) {
+  const unsigned n = 500000, m = 500000;
+  Random rnd(std::time(nullptr));
+  auto g = GenerateRandomGraph(n, m);
+  LCA lca(*g);
+  for (unsigned i = 0; i < m; ++i) {
+    unsigned u = rnd.NextInt() % n, v = rnd.NextInt() % n;
+    lca.GetLCA(u, v);
+  }
 }
