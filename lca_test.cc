@@ -14,7 +14,7 @@ struct LCA {
   std::vector<std::vector<unsigned>> ancestor;
 
   LCA(const Graph &graph)
-      : graph(graph), size(graph.succ.size()), UNDEF(size),
+      : graph(graph), size(graph.succ.size()), UNDEF(~0U),
         tree_parent(size, UNDEF), label(size, UNDEF), height(size, UNDEF),
         dfo(size), ancestor(size) {
     unsigned depth_first_order = 0, current_height = 0;

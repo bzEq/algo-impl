@@ -38,7 +38,7 @@ void IterativeDepthDirstVisit(
   if (graph.succ.empty())
     return;
   const size_t size = graph.succ.size();
-  const unsigned UNDEF = size;
+  const unsigned UNDEF = ~0U;
   std::vector<bool> visited(size, false);
   struct State {
     unsigned parent, u;
@@ -82,7 +82,7 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
     return;
   unsigned depth_first_order = 0, depth_post_order = 0;
   const size_t size = graph.succ.size();
-  const unsigned UNDEF = size;
+  const unsigned UNDEF = ~0U;
   dfo->resize(size, UNDEF);
   rpo->resize(size, UNDEF);
   dfs_tree_parent->resize(size, UNDEF);
@@ -104,7 +104,7 @@ inline bool IsDAG(const Graph &graph) {
   bool answer = true;
   unsigned depth_first_order = 0, depth_post_order = 0;
   const size_t size = graph.succ.size();
-  const unsigned UNDEF = size;
+  const unsigned UNDEF = ~0U;
   std::vector<unsigned> dfo(size, UNDEF), dpo(size, UNDEF);
   auto non_tree_visit = [&](unsigned u, unsigned v) {
     if (dfo[v] <= dfo[u] && dpo[v] == UNDEF)
@@ -121,9 +121,10 @@ inline bool IsDAG(const Graph &graph) {
 }
 
 inline std::unique_ptr<Graph> DeriveDFSTree(const Graph &graph) {
+  const unsigned UNDEF = ~0U;
   auto tree = std::unique_ptr<Graph>(new Graph(graph.succ.size()));
   auto pre_visit = [&](unsigned parent, unsigned u) {
-    if (parent != graph.succ.size())
+    if (parent != UNDEF)
       tree->AddEdge(parent, u);
   };
   auto non_tree_visit = [&](unsigned u, unsigned v) {};
