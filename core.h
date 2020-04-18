@@ -8,6 +8,7 @@
 #include <set>
 #include <time.h>
 #include <vector>
+#include <x86intrin.h>
 
 struct Graph {
   std::vector<std::set<unsigned>> succ, pred;
@@ -167,3 +168,9 @@ GenerateRandomDirectedGraph(size_t num_of_vertexes, size_t num_of_edges) {
   }
   return g;
 }
+
+inline unsigned CountLeadingZeros(uint64_t x) { return _lzcnt_u64(x); }
+
+inline unsigned Log2Ceil(uint64_t x) { return 64 - CountLeadingZeros(x - 1); }
+
+inline unsigned Log2Floor(uint64_t x) { return 63 - CountLeadingZeros(x); }
