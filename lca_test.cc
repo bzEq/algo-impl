@@ -95,7 +95,6 @@ struct LCA {
     }
     if (v == label[0])
       return v;
-    // u = GetAncestor(u, height[u] - height[v]);
     for (int i = ancestor[u].size() - 1; i >= 0; --i) {
       if (height[u] == height[v])
         break;
@@ -105,7 +104,6 @@ struct LCA {
         u = ancestor[u][i];
       }
     }
-    // std::cout << u << std::endl;
     if (u == v)
       return u;
     assert(height[u] == height[v]);
