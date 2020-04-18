@@ -7,13 +7,12 @@
 struct SCC {
   const Graph &graph;
   const size_t size;
-  const unsigned UNDEF;
   std::vector<unsigned> lowest_ancestor, dfo, tree_parent;
   std::vector<std::set<unsigned>> sccs;
   std::function<bool(unsigned, unsigned)> dfs_less;
 
   SCC(const Graph &graph)
-      : graph(graph), size(graph.succ.size()), UNDEF(~0U),
+      : graph(graph), size(graph.succ.size()),
         lowest_ancestor(size, UNDEF), dfo(size, UNDEF),
         tree_parent(size, UNDEF), sccs(size),
         dfs_less([this](unsigned u, unsigned v) { return dfo[u] < dfo[v]; }) {}

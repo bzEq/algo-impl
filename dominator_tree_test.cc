@@ -7,15 +7,15 @@
 
 struct DominatorTree {
   const Graph &cfg;
-  const unsigned size, UNDEF;
+  const size_t size;
   std::vector<unsigned> dfo, rpo, dfs_tree_parent, semi, idom, lt_ancestor,
       best;
   std::vector<std::set<unsigned>> dominance_frontier, lt_bucket;
   std::function<bool(unsigned, unsigned)> dfs_less, dfs_greater;
 
   DominatorTree(const Graph &graph)
-      : cfg(graph), size(cfg.succ.size()), UNDEF(~0U),
-        semi(size, UNDEF), idom(size, UNDEF), lt_ancestor(size, UNDEF),
+      : cfg(graph), size(cfg.succ.size()), semi(size, UNDEF),
+        idom(size, UNDEF), lt_ancestor(size, UNDEF),
         best(size, UNDEF), dominance_frontier(size), lt_bucket(size),
         dfs_less([this](const unsigned u, const unsigned v) {
           return dfo[u] < dfo[v];
@@ -47,7 +47,8 @@ struct DominatorTree {
   }
 
   bool ReachableFromOrigin(unsigned w) {
-    assert(dfo[0] != UNDEF && dfo[w] != UNDEF && dfo[0] <= dfo[w]);
+    assert(dfo[0] != UNDEF && dfo[w] != UNDEF &&
+           dfo[0] <= dfo[w]);
     return (size - 1 - rpo[0]) >= (size - 1 - rpo[w]);
   }
 
@@ -281,7 +282,7 @@ TEST(DominatorTreeTest, SimpleLoop) {
   g.AddEdge(2, 1);
   g.AddEdge(2, 3);
   DominatorTree dt(g);
-  EXPECT_TRUE(dt.dfs_tree_parent[0] == dt.UNDEF);
+  EXPECT_TRUE(dt.dfs_tree_parent[0] == UNDEF);
   EXPECT_TRUE(dt.dfs_tree_parent[1] == 0);
   EXPECT_TRUE(dt.dfs_tree_parent[2] == 1);
   EXPECT_TRUE(dt.dfs_tree_parent[3] == 2);
