@@ -28,7 +28,8 @@ GenerateRandomFlowGraph(size_t num_of_vertexes, size_t num_of_edges,
   for (unsigned u = 0; u < fg->graph->succ.size(); ++u) {
     for (auto v : fg->graph->succ[u]) {
       unsigned c = v == 0 ? 0 : rnd.NextInt() % max_capacity + 1;
-      fg->SetCapacity(u, v, c);
+      if (fg->capacity.find({v, u}) == fg->capacity.end())
+        fg->SetCapacity(u, v, c);
     }
   }
   return fg;
