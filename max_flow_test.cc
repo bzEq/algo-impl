@@ -11,6 +11,7 @@ struct FlowGraph {
       : graph(std::move(graph)), source(0), target(this->graph->succ.size()) {}
 
   bool SetCapacity(unsigned u, unsigned v, int c) {
+    assert(c >= 0);
     assert(graph->succ[u].count(v));
     auto res = capacity.insert({{u, v}, c});
     return std::get<1>(res);
@@ -34,7 +35,8 @@ GenerateRandomFlowGraph(const size_t num_of_vertexes, const size_t num_of_edges,
   Random rnd(std::time(nullptr));
   for (unsigned u = 0; u < fg->graph->succ.size(); ++u) {
     for (auto v : fg->graph->succ[u]) {
-      unsigned c = (v == 0 || u == v) ? 0 : rnd.NextInt() % max_capacity + 1;
+      int c =
+          (v == 0 || u == v) ? 0 : (unsigned)rnd.NextInt() % max_capacity + 1;
       fg->SetCapacity(u, v, c);
     }
   }
