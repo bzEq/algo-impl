@@ -13,8 +13,7 @@ struct FlowGraph {
   bool SetCapacity(unsigned u, unsigned v, int c) {
     assert(c >= 0);
     assert(graph->succ[u].count(v));
-    auto res = capacity.insert({{u, v}, c});
-    return std::get<1>(res);
+    return std::get<1>(capacity.insert({{u, v}, c}));
   }
 
   int GetCapacity(unsigned u, unsigned v) {
