@@ -20,7 +20,7 @@ struct FlowGraph {
 namespace {
 
 inline std::unique_ptr<FlowGraph>
-GenerateRandomFlowGraph(size_t num_of_vertexes, size_t num_of_edges,
+GenerateRandomFlowGraph(const size_t num_of_vertexes, const size_t num_of_edges,
                         const unsigned max_capacity) {
   auto g = GenerateRandomDirectedGraph(num_of_vertexes, num_of_edges);
   auto fg = std::make_unique<FlowGraph>(g);
