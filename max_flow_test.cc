@@ -15,6 +15,13 @@ struct FlowGraph {
     auto res = capacity.insert({{u, v}, c});
     return std::get<1>(res);
   }
+
+  unsigned GetCapacity(unsigned u, unsigned v) {
+    auto it = capacity.find({u, v});
+    if (it == capacity.end())
+      return 0;
+    return it->second;
+  }
 };
 
 namespace {
