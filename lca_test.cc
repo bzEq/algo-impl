@@ -14,8 +14,7 @@ struct LCA {
 
   LCA(const Graph &graph)
       : graph(graph), size(graph.succ.size()), tree_parent(size, UNDEF),
-        label(size, UNDEF), height(size, UNDEF), dfo(size),
-        ancestor(size) {
+        label(size, UNDEF), height(size, UNDEF), dfo(size), ancestor(size) {
     unsigned depth_first_order = 0, current_height = 0;
     auto pre_visit = [&](unsigned parent, unsigned u) {
       height[u] = current_height;
@@ -116,6 +115,8 @@ struct LCA {
     return ancestor[u][0];
   }
 };
+
+namespace {
 
 TEST(LCATest, Log2Ceil) {
   EXPECT_TRUE(Log2Ceil(2) == 1);
@@ -244,3 +245,4 @@ TEST(LCATest, Random) {
     lca.GetLCA(u, v);
   }
 }
+} // namespace
