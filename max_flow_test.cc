@@ -11,8 +11,9 @@ struct FlowGraph {
       : graph(std::move(graph)), source(0), target(this->graph->succ.size()) {}
 
   bool SetCapacity(unsigned u, unsigned v, int c) {
-    assert(c >= 0);
+    assert(u != v);
     assert(graph->succ[u].count(v));
+    assert(c >= 0);
     return std::get<1>(capacity.insert({{u, v}, c}));
   }
 
