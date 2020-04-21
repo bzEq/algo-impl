@@ -82,7 +82,9 @@ struct PushAndRelabel {
     }
   }
 
-  int CalculateMaxFlow() {}
+  int CalculateMaxFlow() {
+    return 0;
+  }
 };
 
 namespace {
@@ -97,7 +99,7 @@ GenerateRandomFlowGraph(const size_t num_of_vertexes, const size_t num_of_edges,
     for (auto v : fg->graph->succ[u]) {
       if (u == v)
         continue;
-      int c = v == 0 ? 0 : (unsigned)rnd.NextInt() % max_capacity + 1;
+      int c = v == fg->source ? 0 : (unsigned)rnd.NextInt() % max_capacity + 1;
       fg->SetCapacity(u, v, c);
     }
   }
