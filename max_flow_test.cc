@@ -12,10 +12,11 @@ struct FlowGraph {
   explicit FlowGraph(std::unique_ptr<Graph> &graph)
       : graph(std::move(graph)), source(0), target(this->graph->succ.size()) {}
 
-  bool SetCapacity(const unsigned u, const unsigned v, const int c) {
+  void InitCapacity(const unsigned u, const unsigned v, const int c) {
     assert(u != v);
     assert(c >= 0);
-    return std::get<1>(residual_capacity.insert({{u, v}, c}));
+    std::get<0>(residual_capacity.insert({{u, v}, 0}))->second = c;
+    std::get<0>(residual_capacity.insert({{v, u}, 0}))->second = 0;
   }
 
   int GetCapacity(const unsigned u, const unsigned v) {
@@ -82,9 +83,7 @@ struct PushAndRelabel {
     }
   }
 
-  int CalculateMaxFlow() {
-    return 0;
-  }
+  int CalculateMaxFlow() { return 0; }
 };
 
 namespace {
@@ -100,7 +99,7 @@ GenerateRandomFlowGraph(const size_t num_of_vertexes, const size_t num_of_edges,
       if (u == v)
         continue;
       int c = v == fg->source ? 0 : (unsigned)rnd.NextInt() % max_capacity + 1;
-      fg->SetCapacity(u, v, c);
+      fg->InitCapacity(u, v, c);
     }
   }
   return fg;
@@ -115,13 +114,10 @@ TEST(MaxFlowTest, SimpleFlowGraph) {
   g->AddEdge(2, 4);
   g->AddEdge(3, 4);
   FlowGraph fg(g);
-  EXPECT_TRUE(fg.SetCapacity(0, 1, 5));
-  EXPECT_FALSE(fg.SetCapacity(0, 1, 6));
+  fg.InitCapacity(0, 1, 5);
   auto it = fg.residual_capacity.find({0, 1});
   EXPECT_TRUE(it != fg.residual_capacity.end());
   EXPECT_TRUE(it->second == 5);
-  EXPECT_TRUE(fg.SetCapacity(1, 2, 3));
-  EXPECT_TRUE(fg.SetCapacity(1, 3, 5));
 }
 
 TEST(MaxFlowTest, GenFlowGraph) {
