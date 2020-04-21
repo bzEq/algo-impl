@@ -5,50 +5,44 @@
 
 struct FlowGraph {
   std::unique_ptr<Graph> graph;
-  const unsigned source, target;
+  unsigned source, target;
   std::map<std::tuple<unsigned, unsigned>, int> residual_capacity;
   std::map<std::tuple<unsigned, unsigned>, int> flow;
 
   explicit FlowGraph(std::unique_ptr<Graph> &graph)
       : graph(std::move(graph)), source(0), target(this->graph->succ.size()) {}
 
-  void InitCapacity(const unsigned u, const unsigned v, const int c) {
+  void InitCapacity(unsigned u, unsigned v, const int c) {
     assert(u != v);
     assert(c >= 0);
+    assert(graph->succ[u].count(v));
     std::get<0>(residual_capacity.insert({{u, v}, 0}))->second = c;
     std::get<0>(residual_capacity.insert({{v, u}, 0}))->second = 0;
   }
 
-  int GetCapacity(const unsigned u, const unsigned v) {
+  int GetCapacity(unsigned u, unsigned v) {
     auto it = residual_capacity.find({u, v});
     if (it == residual_capacity.end())
       return 0;
     return it->second;
   }
 
-  int GetFlow(const unsigned u, const unsigned v) {
+  int GetFlow(unsigned u, unsigned v) {
     auto it = flow.find({u, v});
     if (it == flow.end())
       return 0;
     return it->second;
   }
 
-  void UpdateFlow(const unsigned u, const unsigned v, const int f) {
+  void UpdateFlow(unsigned u, unsigned v, const int f) {
     const int c = GetCapacity(u, v);
     assert(f <= c);
-    auto update = [&, this](const unsigned u, const unsigned v, const int f) {
-      auto res = flow.insert({{u, v}, f});
-      if (std::get<1>(res))
-        return;
-      auto it = std::get<0>(res);
-      it->second = f;
+    auto update = [&, this](unsigned u, unsigned v, const int f) {
+      std::get<0>(flow.insert({{u, v}, 0}))->second = f;
     };
     update(u, v, f);
     update(v, u, -f);
-    auto res = residual_capacity.insert({{v, u}, c - f});
-    if (std::get<1>(res))
-      return;
-    std::get<0>(res)->second = c - f;
+    std::get<0>(residual_capacity.insert({{v, u}, 0}))->second = c - f;
   }
 };
 
@@ -65,7 +59,7 @@ struct PushAndRelabel {
     distance[network.source] = network.graph->succ.size();
   }
 
-  void Push(const unsigned u, const unsigned v) {
+  void Push(unsigned u, unsigned v) {
     int diff = std::min(network.GetCapacity(u, v), excess[u]);
     network.UpdateFlow(u, v, network.GetFlow(u, v) + diff);
     excess[u] -= diff;
