@@ -61,8 +61,7 @@ struct PushAndRelabel {
   std::vector<unsigned> distance, seen;
   std::queue<unsigned> worklist;
 
-  PushAndRelabel(FlowGraph &network)
-      : network(network), excess(network.size, 0), distance(network.size, 0) {}
+  PushAndRelabel(FlowGraph &network) : network(network) {}
 
   void Push(unsigned u, unsigned v) {
     int diff = std::min(network.GetResidualCapacity(u, v), excess[u]);
@@ -108,12 +107,14 @@ struct PushAndRelabel {
   }
 
   int CalculateMaxFlow() {
-    excess[network.source] = std::numeric_limits<int>::max();
+    distance.resize(network.size, 0);
     distance[network.source] = network.size;
+    excess.resize(network.size, 0);
+    excess[network.source] = std::numeric_limits<int>::max();
+    seen.resize(network.size, 0);
     for (unsigned u = 0; u < network.size; ++u) {
       Push(network.source, u);
     }
-    seen.resize(network.size, 0);
     while (!worklist.empty()) {
       unsigned u = worklist.front();
       worklist.pop();
