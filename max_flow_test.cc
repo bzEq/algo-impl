@@ -2,17 +2,16 @@
 
 #include <gtest/gtest.h>
 #include <limits>
+#include <queue>
 
 struct FlowGraph {
   std::unique_ptr<Graph> graph;
   const size_t size;
-  unsigned source, target;
   std::map<std::tuple<unsigned, unsigned>, int> capacity;
   std::map<std::tuple<unsigned, unsigned>, int> flow;
 
   explicit FlowGraph(std::unique_ptr<Graph> &graph)
-      : graph(std::move(graph)), size(this->graph->succ.size()), source(0),
-        target(size - 1) {}
+      : graph(std::move(graph)), size(this->graph->succ.size()) {}
 
   void InitCapacity(unsigned u, unsigned v, const int c) {
     assert(u != v);
@@ -52,23 +51,31 @@ struct PushAndRelabel {
   static const unsigned INF = std::numeric_limits<unsigned>::max();
   FlowGraph &network;
   std::vector<int> excess;
-  std::vector<unsigned> distance, worklist, seen;
+  std::vector<unsigned> distance, seen;
+  std::queue<unsigned> worklist;
 
   PushAndRelabel(FlowGraph &network)
-      : network(network), excess(network.size, 0), distance(network.size, INF) {
-    distance[network.target] = 0;
-    distance[network.source] = network.size;
+      : network(network), excess(network.size, 0), distance(network.size, 0) {
+    distance[network.size - 1] = 0;
+    distance[0] = network.size;
   }
 
-  int Push(unsigned u, unsigned v) {
+  void Push(unsigned u, unsigned v) {
     int diff = std::min(network.GetResidualCapacity(u, v), excess[u]);
+    // printf("Before: RC of (%u, %u): %d\n", u, v,
+    //        network.GetResidualCapacity(u, v));
+    // printf("Before: Flow of (%u, %u): %d\n", u, v, network.GetFlow(u, v));
     network.UpdateFlow(u, v, network.GetFlow(u, v) + diff);
+    // printf("After: RC of (%u, %u): %d\n", u, v,
+    //        network.GetResidualCapacity(u, v));
+    // printf("After: Flow of (%u, %u): %d\n", u, v, network.GetFlow(u, v));
     excess[u] -= diff;
     excess[v] += diff;
-    return diff;
+    if (diff && excess[v] == diff)
+      worklist.push(v);
   }
 
-  unsigned Relabel(unsigned u) {
+  void Relabel(unsigned u) {
     unsigned dis = INF;
     for (unsigned v = 0; v < network.size; ++v) {
       if (network.GetResidualCapacity(u, v) > 0)
@@ -76,11 +83,41 @@ struct PushAndRelabel {
     }
     if (dis != INF)
       distance[u] = dis + 1;
-    return distance[u];
+  }
+
+  void Discharge(unsigned u) {
+    while (excess[u] > 0) {
+      unsigned v = seen[u];
+      // printf("%d seen %d\n", u, v);
+      if (v < network.size) {
+        if (network.GetResidualCapacity(u, v) > 0 &&
+            distance[u] > distance[v]) {
+          Push(u, v);
+        } else {
+          ++seen[u];
+        }
+      } else {
+        Relabel(u);
+        seen[u] = 0;
+      }
+    }
   }
 
   int CalculateMaxFlow() {
+    excess[0] = std::numeric_limits<int>::max();
+    for (unsigned u = 1; u < network.size; ++u) {
+      Push(0, u);
+    }
+    seen.resize(network.size, 0);
+    while (!worklist.empty()) {
+      unsigned u = worklist.front();
+      worklist.pop();
+      if (u != 0 && u != network.size - 1)
+        Discharge(u);
+    }
     int max_flow = 0;
+    for (unsigned u = 0; u < network.size; ++u)
+      max_flow += network.GetFlow(0, u);
     return max_flow;
   }
 };
@@ -97,7 +134,7 @@ GenerateRandomFlowGraph(const size_t num_of_vertexes, const size_t num_of_edges,
     for (auto v : fg->graph->succ[u]) {
       if (u == v)
         continue;
-      int c = v == fg->source ? 0 : (unsigned)rnd.NextInt() % max_capacity + 1;
+      int c = v == 0 ? 0 : (unsigned)rnd.NextInt() % max_capacity + 1;
       fg->InitCapacity(u, v, c);
     }
   }
@@ -113,15 +150,21 @@ TEST(MaxFlowTest, SimpleFlowGraph) {
   g->AddEdge(2, 4);
   g->AddEdge(3, 4);
   FlowGraph fg(g);
-  fg.InitCapacity(0, 1, 5);
+  fg.InitCapacity(0, 1, 1);
+  fg.InitCapacity(1, 2, 2);
+  fg.InitCapacity(2, 3, 3);
+  fg.InitCapacity(3, 4, 4);
   auto it = fg.capacity.find({0, 1});
   EXPECT_TRUE(it != fg.capacity.end());
-  EXPECT_TRUE(it->second == 5);
+  EXPECT_TRUE(it->second == 1);
+  PushAndRelabel calc(fg);
+  EXPECT_TRUE(calc.CalculateMaxFlow() == 1);
 }
 
-TEST(MaxFlowTest, GenFlowGraph) {
-  auto fg = GenerateRandomFlowGraph(100, 100, 1000);
-  (void)fg;
+TEST(MaxFlowTest, RandomNetwork) {
+  auto fg = GenerateRandomFlowGraph(1000, 1000, 1000);
+  PushAndRelabel calc(*fg);  
+  calc.CalculateMaxFlow();
 }
 
 } // namespace
