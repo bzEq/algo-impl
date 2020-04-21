@@ -7,11 +7,18 @@
 struct FlowGraph {
   std::unique_ptr<Graph> graph;
   const size_t size;
+  const unsigned source, target;
   std::map<std::tuple<unsigned, unsigned>, int> capacity;
   std::map<std::tuple<unsigned, unsigned>, int> flow;
 
+  explicit FlowGraph(std::unique_ptr<Graph> &graph, unsigned source,
+                     unsigned target)
+      : graph(std::move(graph)), size(this->graph->succ.size()), source(source),
+        target(target) {}
+
   explicit FlowGraph(std::unique_ptr<Graph> &graph)
-      : graph(std::move(graph)), size(this->graph->succ.size()) {}
+      : graph(std::move(graph)), size(this->graph->succ.size()), source(0),
+        target(size - 1) {}
 
   void InitCapacity(unsigned u, unsigned v, const int c) {
     assert(u != v);
@@ -55,10 +62,7 @@ struct PushAndRelabel {
   std::queue<unsigned> worklist;
 
   PushAndRelabel(FlowGraph &network)
-      : network(network), excess(network.size, 0), distance(network.size, 0) {
-    distance[network.size - 1] = 0;
-    distance[0] = network.size;
-  }
+      : network(network), excess(network.size, 0), distance(network.size, 0) {}
 
   void Push(unsigned u, unsigned v) {
     int diff = std::min(network.GetResidualCapacity(u, v), excess[u]);
@@ -104,20 +108,21 @@ struct PushAndRelabel {
   }
 
   int CalculateMaxFlow() {
-    excess[0] = std::numeric_limits<int>::max();
-    for (unsigned u = 1; u < network.size; ++u) {
-      Push(0, u);
+    excess[network.source] = std::numeric_limits<int>::max();
+    distance[network.source] = network.size;
+    for (unsigned u = 0; u < network.size; ++u) {
+      Push(network.source, u);
     }
     seen.resize(network.size, 0);
     while (!worklist.empty()) {
       unsigned u = worklist.front();
       worklist.pop();
-      if (u != 0 && u != network.size - 1)
+      if (u != network.source && u != network.target)
         Discharge(u);
     }
     int max_flow = 0;
     for (unsigned u = 0; u < network.size; ++u)
-      max_flow += network.GetFlow(0, u);
+      max_flow += network.GetFlow(network.source, u);
     return max_flow;
   }
 };
@@ -134,7 +139,7 @@ GenerateRandomFlowGraph(const size_t num_of_vertexes, const size_t num_of_edges,
     for (auto v : fg->graph->succ[u]) {
       if (u == v)
         continue;
-      int c = v == 0 ? 0 : (unsigned)rnd.NextInt() % max_capacity + 1;
+      int c = v == fg->source ? 0 : (unsigned)rnd.NextInt() % max_capacity + 1;
       fg->InitCapacity(u, v, c);
     }
   }
@@ -161,9 +166,28 @@ TEST(MaxFlowTest, SimpleFlowGraph) {
   EXPECT_TRUE(calc.CalculateMaxFlow() == 1);
 }
 
+TEST(MaxFlowTest, LuoGu3376) {
+  auto g = std::make_unique<Graph>(4, true);
+  g->AddEdge(3, 1);
+  g->AddEdge(3, 2);
+  g->AddEdge(1, 2);
+  g->AddEdge(1, 0);
+  g->AddEdge(0, 2);
+  FlowGraph fg(g, 3, 2);
+  fg.InitCapacity(3, 1, 30);
+  fg.InitCapacity(3, 2, 20);
+  fg.InitCapacity(1, 2, 20);
+  fg.InitCapacity(1, 0, 30);
+  fg.InitCapacity(0, 2, 40);
+  PushAndRelabel calc(fg);
+  int max_flow = calc.CalculateMaxFlow();
+  // std::cout << max_flow << std::endl;
+  EXPECT_TRUE(max_flow == 50);
+}
+
 TEST(MaxFlowTest, RandomNetwork) {
   auto fg = GenerateRandomFlowGraph(1000, 1000, 1000);
-  PushAndRelabel calc(*fg);  
+  PushAndRelabel calc(*fg);
   calc.CalculateMaxFlow();
 }
 
