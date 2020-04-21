@@ -5,24 +5,65 @@
 struct FlowGraph {
   std::unique_ptr<Graph> graph;
   const unsigned source, target;
-  std::map<std::tuple<unsigned, unsigned>, int> capacity;
+  std::map<std::tuple<unsigned, unsigned>, int> capacity, residual_capacity;
+  std::map<std::tuple<unsigned, unsigned>, int> flow;
 
   explicit FlowGraph(std::unique_ptr<Graph> &graph)
       : graph(std::move(graph)), source(0), target(this->graph->succ.size()) {}
 
-  bool SetCapacity(unsigned u, unsigned v, int c) {
+  bool SetCapacity(const unsigned u, const unsigned v, const int c) {
     assert(u != v);
     assert(graph->succ[u].count(v));
     assert(c >= 0);
     return std::get<1>(capacity.insert({{u, v}, c}));
   }
 
-  int GetCapacity(unsigned u, unsigned v) {
+  int GetCapacity(const unsigned u, const unsigned v) {
     auto it = capacity.find({u, v});
     if (it == capacity.end())
       return 0;
     return it->second;
   }
+
+  int GetResidualCapacity(const unsigned u, const unsigned v) {
+    auto it = residual_capacity.find({u, v});
+    if (it == residual_capacity.end())
+      return 0;
+    return it->second;
+  }
+
+  int GetFlow(const unsigned u, const unsigned v) {
+    auto it = flow.find({u, v});
+    if (it == flow.end())
+      return 0;
+    return it->second;
+  }
+
+  void UpdateFlow(const unsigned u, const unsigned v, const int f) {
+    const int c = GetCapacity(u, v);
+    assert(f <= c);
+    auto update = [&, this](const unsigned u, const unsigned v, const int f) {
+      auto res = flow.insert({{u, v}, f});
+      if (std::get<1>(res))
+        return;
+      auto it = std::get<0>(res);
+      it->second = f;
+    };
+    update(u, v, f);
+    update(v, u, -f);
+    auto res = residual_capacity.insert({{v, u}, c - f});
+    if (std::get<1>(res))
+      return;
+    std::get<0>(res)->second = c - f;
+  }
+};
+
+struct PushAndRelabel {
+  FlowGraph &network;
+  std::vector<int> excess;
+
+  PushAndRelabel(FlowGraph &network)
+      : network(network), excess(network.graph->succ.size(), 0) {}
 };
 
 namespace {
@@ -35,8 +76,9 @@ GenerateRandomFlowGraph(const size_t num_of_vertexes, const size_t num_of_edges,
   Random rnd(std::time(nullptr));
   for (unsigned u = 0; u < fg->graph->succ.size(); ++u) {
     for (auto v : fg->graph->succ[u]) {
-      int c =
-          (v == 0 || u == v) ? 0 : (unsigned)rnd.NextInt() % max_capacity + 1;
+      if (u == v)
+        continue;
+      int c = v == 0 ? 0 : (unsigned)rnd.NextInt() % max_capacity + 1;
       fg->SetCapacity(u, v, c);
     }
   }
