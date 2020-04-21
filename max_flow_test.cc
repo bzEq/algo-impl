@@ -5,24 +5,26 @@
 
 struct FlowGraph {
   std::unique_ptr<Graph> graph;
+  const size_t size;
   unsigned source, target;
-  std::map<std::tuple<unsigned, unsigned>, int> residual_capacity;
+  std::map<std::tuple<unsigned, unsigned>, int> capacity;
   std::map<std::tuple<unsigned, unsigned>, int> flow;
 
   explicit FlowGraph(std::unique_ptr<Graph> &graph)
-      : graph(std::move(graph)), source(0), target(this->graph->succ.size()) {}
+      : graph(std::move(graph)), size(this->graph->succ.size()), source(0),
+        target(size - 1) {}
 
   void InitCapacity(unsigned u, unsigned v, const int c) {
     assert(u != v);
     assert(c >= 0);
     assert(graph->succ[u].count(v));
-    std::get<0>(residual_capacity.insert({{u, v}, 0}))->second = c;
-    std::get<0>(residual_capacity.insert({{v, u}, 0}))->second = 0;
+    std::get<0>(capacity.insert({{u, v}, 0}))->second = c;
+    std::get<0>(capacity.insert({{v, u}, 0}))->second = 0;
   }
 
   int GetCapacity(unsigned u, unsigned v) {
-    auto it = residual_capacity.find({u, v});
-    if (it == residual_capacity.end())
+    auto it = capacity.find({u, v});
+    if (it == capacity.end())
       return 0;
     return it->second;
   }
@@ -34,15 +36,15 @@ struct FlowGraph {
     return it->second;
   }
 
+  int GetResidualCapacity(unsigned u, unsigned v) {
+    return GetCapacity(u, v) - GetFlow(u, v);
+  }
+
   void UpdateFlow(unsigned u, unsigned v, const int f) {
     const int c = GetCapacity(u, v);
     assert(f <= c);
-    auto update = [&, this](unsigned u, unsigned v, const int f) {
-      std::get<0>(flow.insert({{u, v}, 0}))->second = f;
-    };
-    update(u, v, f);
-    update(v, u, -f);
-    std::get<0>(residual_capacity.insert({{v, u}, 0}))->second = c - f;
+    std::get<0>(flow.insert({{u, v}, 0}))->second = f;
+    std::get<0>(flow.insert({{v, u}, 0}))->second = -f;
   }
 };
 
@@ -50,34 +52,37 @@ struct PushAndRelabel {
   static const unsigned INF = std::numeric_limits<unsigned>::max();
   FlowGraph &network;
   std::vector<int> excess;
-  std::vector<unsigned> distance;
+  std::vector<unsigned> distance, worklist, seen;
 
   PushAndRelabel(FlowGraph &network)
-      : network(network), excess(network.graph->succ.size(), 0),
-        distance(network.graph->succ.size(), INF) {
+      : network(network), excess(network.size, 0), distance(network.size, INF) {
     distance[network.target] = 0;
-    distance[network.source] = network.graph->succ.size();
+    distance[network.source] = network.size;
   }
 
-  void Push(unsigned u, unsigned v) {
-    int diff = std::min(network.GetCapacity(u, v), excess[u]);
+  int Push(unsigned u, unsigned v) {
+    int diff = std::min(network.GetResidualCapacity(u, v), excess[u]);
     network.UpdateFlow(u, v, network.GetFlow(u, v) + diff);
     excess[u] -= diff;
     excess[v] += diff;
+    return diff;
   }
 
-  void Relabel(unsigned u) {
-    for (auto v : network.graph->succ[u]) {
-      if (distance[v] != INF)
-        distance[u] = std::min(distance[u], distance[v] + 1);
+  unsigned Relabel(unsigned u) {
+    unsigned dis = INF;
+    for (unsigned v = 0; v < network.size; ++v) {
+      if (network.GetResidualCapacity(u, v) > 0)
+        dis = std::min(dis, distance[v]);
     }
-    for (auto v : network.graph->pred[u]) {
-      if (distance[v] != INF)
-        distance[u] = std::min(distance[u], distance[v] + 1);
-    }
+    if (dis != INF)
+      distance[u] = dis + 1;
+    return distance[u];
   }
 
-  int CalculateMaxFlow() { return 0; }
+  int CalculateMaxFlow() {
+    int max_flow = 0;
+    return max_flow;
+  }
 };
 
 namespace {
@@ -109,8 +114,8 @@ TEST(MaxFlowTest, SimpleFlowGraph) {
   g->AddEdge(3, 4);
   FlowGraph fg(g);
   fg.InitCapacity(0, 1, 5);
-  auto it = fg.residual_capacity.find({0, 1});
-  EXPECT_TRUE(it != fg.residual_capacity.end());
+  auto it = fg.capacity.find({0, 1});
+  EXPECT_TRUE(it != fg.capacity.end());
   EXPECT_TRUE(it->second == 5);
 }
 
