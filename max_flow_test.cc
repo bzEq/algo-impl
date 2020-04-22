@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 #include <limits>
+#include <queue>
 
 struct Network {
   std::unique_ptr<Graph> graph;
@@ -54,9 +55,15 @@ struct PushAndRelabel {
   Network &network;
   std::vector<int> excess;
   std::vector<unsigned> height, seen;
-  std::vector<unsigned> worklist;
+  std::function<bool(unsigned, unsigned)> height_less;
+  std::priority_queue<unsigned, std::vector<unsigned>, decltype(height_less)>
+      worklist;
 
-  PushAndRelabel(Network &network) : network(network) {}
+  PushAndRelabel(Network &network)
+      : network(network), height_less([this](unsigned u, unsigned v) {
+          return height[u] < height[v];
+        }),
+        worklist(height_less) {}
 
   void Push(unsigned u, unsigned v) {
     assert(excess[u] >= 0);
@@ -72,7 +79,7 @@ struct PushAndRelabel {
     excess[u] -= diff;
     excess[v] += diff;
     if (diff && excess[v] == diff)
-      worklist.push_back(v);
+      worklist.push(v);
   }
 
   void Relabel(unsigned u) {
@@ -90,8 +97,7 @@ struct PushAndRelabel {
       unsigned v = seen[u];
       // printf("%d seen %d\n", u, v);
       if (v < network.size) {
-        if (network.GetResidualCapacity(u, v) > 0 &&
-            height[u] > height[v]) {
+        if (network.GetResidualCapacity(u, v) > 0 && height[u] > height[v]) {
           Push(u, v);
         } else {
           ++seen[u];
@@ -114,8 +120,8 @@ struct PushAndRelabel {
         Push(network.source, u);
     }
     while (!worklist.empty()) {
-      unsigned u = worklist.back();
-      worklist.pop_back();
+      unsigned u = worklist.top();
+      worklist.pop();
       if (u != network.source && u != network.target)
         Discharge(u);
     }
