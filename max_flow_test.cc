@@ -53,7 +53,7 @@ struct PushAndRelabel {
   static const unsigned INF = std::numeric_limits<unsigned>::max();
   Network &network;
   std::vector<int> excess;
-  std::vector<unsigned> distance, seen;
+  std::vector<unsigned> height, seen;
   std::vector<unsigned> worklist;
 
   PushAndRelabel(Network &network) : network(network) {}
@@ -79,10 +79,10 @@ struct PushAndRelabel {
     unsigned dis = INF;
     for (unsigned v = 0; v < network.size; ++v) {
       if (network.GetResidualCapacity(u, v) > 0)
-        dis = std::min(dis, distance[v]);
+        dis = std::min(dis, height[v]);
     }
     if (dis != INF)
-      distance[u] = dis + 1;
+      height[u] = dis + 1;
   }
 
   void Discharge(unsigned u) {
@@ -91,7 +91,7 @@ struct PushAndRelabel {
       // printf("%d seen %d\n", u, v);
       if (v < network.size) {
         if (network.GetResidualCapacity(u, v) > 0 &&
-            distance[u] > distance[v]) {
+            height[u] > height[v]) {
           Push(u, v);
         } else {
           ++seen[u];
@@ -104,8 +104,8 @@ struct PushAndRelabel {
   }
 
   int CalculateMaxFlow() {
-    distance.resize(network.size, 0);
-    distance[network.source] = network.size;
+    height.resize(network.size, 0);
+    height[network.source] = network.size;
     excess.resize(network.size, 0);
     excess[network.source] = std::numeric_limits<int>::max();
     seen.resize(network.size, 0);
@@ -183,6 +183,16 @@ TEST(MaxFlowTest, LuoGu3376) {
   int max_flow = calc.CalculateMaxFlow();
   // std::cout << max_flow << std::endl;
   EXPECT_TRUE(max_flow == 50);
+}
+
+TEST(MaxFlowTest, Partitioned) {
+  auto g = std::make_unique<Graph>(3, true);
+  g->AddEdge(0, 1);
+  Network network(g);
+  network.InitCapacity(0, 1, 1);
+  PushAndRelabel calc(network);
+  EXPECT_TRUE(calc.CalculateMaxFlow() == 0);
+  EXPECT_TRUE(calc.height[1] == network.size + 1);
 }
 
 TEST(MaxFlowTest, RandomNetwork) {
