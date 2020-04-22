@@ -25,7 +25,6 @@ struct Network {
     assert(c >= 0);
     assert(graph->succ[u].count(v));
     std::get<0>(capacity.insert({{u, v}, 0}))->second = c;
-    std::get<0>(capacity.insert({{v, u}, 0}))->second = 0;
   }
 
   int GetCapacity(unsigned u, unsigned v) {
