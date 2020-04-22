@@ -36,7 +36,10 @@ struct FlowGraph {
   }
 
   int GetFlow(unsigned u, unsigned v) {
-    return std::get<0>(flow.insert({{u, v}, 0}))->second;
+    auto it = flow.find({u, v});
+    if (it == flow.end())
+      return 0;
+    return it->second;
   }
 
   int GetResidualCapacity(unsigned u, unsigned v) {
