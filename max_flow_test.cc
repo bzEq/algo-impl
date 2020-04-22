@@ -110,7 +110,8 @@ struct PushAndRelabel {
     excess[network.source] = std::numeric_limits<int>::max();
     seen.resize(network.size, 0);
     for (unsigned u = 0; u < network.size; ++u) {
-      Push(network.source, u);
+      if (u != network.source)
+        Push(network.source, u);
     }
     while (!worklist.empty()) {
       unsigned u = worklist.back();
