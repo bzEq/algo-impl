@@ -2,7 +2,6 @@
 
 #include <gtest/gtest.h>
 #include <limits>
-#include <queue>
 
 struct Network {
   std::unique_ptr<Graph> graph;
@@ -55,7 +54,7 @@ struct PushAndRelabel {
   Network &network;
   std::vector<int> excess;
   std::vector<unsigned> distance, seen;
-  std::queue<unsigned> worklist;
+  std::vector<unsigned> worklist;
 
   PushAndRelabel(Network &network) : network(network) {}
 
@@ -73,7 +72,7 @@ struct PushAndRelabel {
     excess[u] -= diff;
     excess[v] += diff;
     if (diff && excess[v] == diff)
-      worklist.push(v);
+      worklist.push_back(v);
   }
 
   void Relabel(unsigned u) {
@@ -114,8 +113,8 @@ struct PushAndRelabel {
       Push(network.source, u);
     }
     while (!worklist.empty()) {
-      unsigned u = worklist.front();
-      worklist.pop();
+      unsigned u = worklist.back();
+      worklist.pop_back();
       if (u != network.source && u != network.target)
         Discharge(u);
     }
