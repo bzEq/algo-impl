@@ -36,21 +36,15 @@ struct FlowGraph {
   }
 
   int GetFlow(unsigned u, unsigned v) {
-    auto it = flow.find({u, v});
-    if (it == flow.end())
-      return 0;
-    return it->second;
+    return std::get<0>(flow.insert({{u, v}, 0}))->second;
   }
 
   int GetResidualCapacity(unsigned u, unsigned v) {
     return GetCapacity(u, v) - GetFlow(u, v);
   }
 
-  void UpdateFlow(unsigned u, unsigned v, const int f) {
-    const int c = GetCapacity(u, v);
-    assert(f <= c);
-    std::get<0>(flow.insert({{u, v}, 0}))->second = f;
-    std::get<0>(flow.insert({{v, u}, 0}))->second = -f;
+  void AddToFlow(unsigned u, unsigned v, int diff) {
+    std::get<0>(flow.insert({{u, v}, 0}))->second += diff;
   }
 };
 
@@ -64,11 +58,13 @@ struct PushAndRelabel {
   PushAndRelabel(FlowGraph &network) : network(network) {}
 
   void Push(unsigned u, unsigned v) {
+    assert(excess[u] >= 0);
     int diff = std::min(network.GetResidualCapacity(u, v), excess[u]);
     // printf("Before: RC of (%u, %u): %d\n", u, v,
     //        network.GetResidualCapacity(u, v));
     // printf("Before: Flow of (%u, %u): %d\n", u, v, network.GetFlow(u, v));
-    network.UpdateFlow(u, v, network.GetFlow(u, v) + diff);
+    network.AddToFlow(u, v, diff);
+    network.AddToFlow(v, u, -diff);
     // printf("After: RC of (%u, %u): %d\n", u, v,
     //        network.GetResidualCapacity(u, v));
     // printf("After: Flow of (%u, %u): %d\n", u, v, network.GetFlow(u, v));
@@ -123,7 +119,7 @@ struct PushAndRelabel {
     }
     int max_flow = 0;
     for (unsigned u = 0; u < network.size; ++u)
-      max_flow += network.GetFlow(network.source, u);
+      max_flow += network.GetFlow(u, network.target);
     return max_flow;
   }
 };
