@@ -13,12 +13,10 @@
 static constexpr unsigned UNDEF = ~0U;
 
 struct Graph {
-  std::vector<std::set<unsigned>> succ, pred;
   const bool is_directed;
-  Graph(size_t n, bool is_directed = false) : is_directed(is_directed) {
-    succ.resize(n);
-    pred.resize(n);
-  }
+  std::vector<std::set<unsigned>> succ, pred;
+  Graph(size_t n, bool is_directed = false)
+      : is_directed(is_directed), succ(n), pred(n) {}
 
   bool AddEdge(unsigned u, unsigned v) {
     assert(u < succ.size() && v < succ.size() && "Invalid vertex id");
