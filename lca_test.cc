@@ -33,7 +33,7 @@ struct LCA {
       assert(current_height > 0);
       --current_height;
     };
-    IterativeDepthDirstVisit(graph, pre_visit, non_tree_visit, post_visit);
+    IterativeDepthFirstVisit(graph, pre_visit, non_tree_visit, post_visit);
     const unsigned MAX_ORDER = Log2Ceil(size - 1) + 1;
     for (unsigned u = 0; u < size; ++u) {
       if (Covers(label[0], u)) {

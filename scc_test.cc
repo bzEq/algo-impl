@@ -52,7 +52,7 @@ struct SCC {
         sccs[u].insert(v);
       }
     };
-    IterativeDepthDirstVisit(graph, pre_visit, non_tree_visit, post_visit);
+    IterativeDepthFirstVisit(graph, pre_visit, non_tree_visit, post_visit);
     CompressLowestAncestor();
   }
 

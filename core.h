@@ -32,7 +32,7 @@ struct Graph {
   }
 };
 
-inline void IterativeDepthDirstVisit(
+inline void IterativeDepthFirstVisit(
     const Graph &graph,
     const std::function<void(unsigned parent, unsigned u)> &pre_visit,
     const std::function<void(unsigned u, unsigned v)> &non_tree_visit,
@@ -93,7 +93,7 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
     (*rpo)[u] = (size - 1) - depth_post_order;
     ++depth_post_order;
   };
-  IterativeDepthDirstVisit(graph, pre_visit, non_tree_visit, post_visit);
+  IterativeDepthFirstVisit(graph, pre_visit, non_tree_visit, post_visit);
 }
 
 inline bool IsDAG(const Graph &graph) {
@@ -113,7 +113,7 @@ inline bool IsDAG(const Graph &graph) {
   auto post_visit = [&](unsigned u, unsigned parent) {
     dpo[u] = depth_post_order++;
   };
-  IterativeDepthDirstVisit(graph, pre_visit, non_tree_visit, post_visit);
+  IterativeDepthFirstVisit(graph, pre_visit, non_tree_visit, post_visit);
   return answer;
 }
 
@@ -125,7 +125,7 @@ inline std::unique_ptr<Graph> DeriveDFSTree(const Graph &graph) {
   };
   auto non_tree_visit = [&](unsigned u, unsigned v) {};
   auto post_visit = [&](unsigned u, unsigned parent) {};
-  IterativeDepthDirstVisit(graph, pre_visit, non_tree_visit, post_visit);
+  IterativeDepthFirstVisit(graph, pre_visit, non_tree_visit, post_visit);
   return tree;
 }
 
