@@ -329,16 +329,16 @@ static Graph *GetBenchmarkGraph() {
   return g.get();
 }
 
-TEST(DominatorTreeTest, Dumb) { GetBenchmarkGraph(); }
+TEST(DominatorTreeBenchmark, GenBenchmarkGraph) { GetBenchmarkGraph(); }
 
-TEST(DominatorTreeTest, BenchmarkSLT) {
+TEST(DominatorTreeBenchmark, BenchmarkSLT) {
   auto g = GetBenchmarkGraph();
   DominatorTree dt(*g);
   dt.CalculateDTViaSLT();
   dt.CalculateDF();
 }
 
-TEST(DominatorTreeTest, BenchmarkDataFlow) {
+TEST(DominatorTreeBenchmark, BenchmarkDataFlow) {
   auto g = GetBenchmarkGraph();
   DominatorTree dt(*g);
   dt.CalculateDTViaDataFlow();
