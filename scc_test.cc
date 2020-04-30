@@ -12,9 +12,8 @@ struct SCC {
   std::function<bool(unsigned, unsigned)> dfs_less;
 
   SCC(const Graph &graph)
-      : graph(graph), size(graph.succ.size()),
-        lowest_ancestor(size, UNDEF), dfo(size, UNDEF),
-        tree_parent(size, UNDEF), sccs(size),
+      : graph(graph), size(graph.size), lowest_ancestor(size, UNDEF),
+        dfo(size, UNDEF), tree_parent(size, UNDEF), sccs(size),
         dfs_less([this](unsigned u, unsigned v) { return dfo[u] < dfo[v]; }) {}
 
   void Calculate() {

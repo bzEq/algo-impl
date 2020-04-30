@@ -15,11 +15,11 @@ struct Network {
 
   explicit Network(std::unique_ptr<Graph> &graph, unsigned source,
                    unsigned target)
-      : graph(std::move(graph)), size(this->graph->succ.size()), source(source),
+      : graph(std::move(graph)), size(this->graph->size), source(source),
         target(target) {}
 
   explicit Network(std::unique_ptr<Graph> &graph)
-      : graph(std::move(graph)), size(this->graph->succ.size()), source(0),
+      : graph(std::move(graph)), size(this->graph->size), source(0),
         target(size - 1) {}
 
   void InitCapacity(unsigned u, unsigned v, const int c) {
@@ -142,7 +142,7 @@ GenerateRandomNetwork(const size_t num_of_vertexes, const size_t num_of_edges,
   auto g = GenerateRandomDirectedGraph(num_of_vertexes, num_of_edges);
   auto network = std::make_unique<Network>(g);
   Random rnd(std::time(nullptr));
-  for (unsigned u = 0; u < network->graph->succ.size(); ++u) {
+  for (unsigned u = 0; u < network->size; ++u) {
     for (auto v : network->graph->succ[u]) {
       if (u == v)
         continue;

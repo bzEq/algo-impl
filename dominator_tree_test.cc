@@ -14,7 +14,7 @@ struct DominatorTree {
   std::function<bool(unsigned, unsigned)> dfs_less, dfs_greater;
 
   DominatorTree(const Graph &graph)
-      : cfg(graph), size(cfg.succ.size()), semi(size, UNDEF), idom(size, UNDEF),
+      : cfg(graph), size(cfg.size), semi(size, UNDEF), idom(size, UNDEF),
         lt_ancestor(size, UNDEF), best(size, UNDEF), dominance_frontier(size),
         lt_bucket(size), dfs_less([this](const unsigned u, const unsigned v) {
           return dfo[u] < dfo[v];
