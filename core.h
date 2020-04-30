@@ -36,7 +36,7 @@ inline void IterativeDepthFirstVisit(
     const std::function<void(unsigned parent, unsigned u)> &pre_visit,
     const std::function<void(unsigned u, unsigned v)> &non_tree_visit,
     const std::function<void(unsigned u, unsigned parent)> &post_visit) {
-  if (graph.succ.empty())
+  if (!graph.size)
     return;
   const size_t size = graph.size;
   std::vector<bool> visited(size, false);
@@ -96,8 +96,6 @@ inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
 }
 
 inline bool IsDAG(const Graph &graph) {
-  if (!graph.size)
-    return false;
   bool answer = true;
   unsigned depth_first_order = 0, depth_post_order = 0;
   const size_t size = graph.size;
