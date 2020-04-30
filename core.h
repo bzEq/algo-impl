@@ -142,15 +142,14 @@ private:
   std::uniform_int_distribution<int64_t> int_distribution_;
 };
 
-inline std::unique_ptr<Graph> GenerateRandomGraph(size_t num_of_vertexes,
-                                                  size_t num_of_edges) {
-  auto g = std::make_unique<Graph>(num_of_vertexes);
-  size_t c =
-      std::min(num_of_edges, num_of_vertexes * (num_of_vertexes - 1) / 2);
+inline std::unique_ptr<Graph> GenerateRandomGraph(size_t num_vertexes,
+                                                  size_t num_edges) {
+  auto g = std::make_unique<Graph>(num_vertexes);
+  size_t c = std::min(num_edges, num_vertexes * (num_vertexes - 1) / 2);
   Random rnd(time(nullptr));
   while (c) {
-    unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes,
-             v = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes;
+    unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_vertexes,
+             v = static_cast<unsigned>(rnd.NextInt()) % num_vertexes;
     if (g->AddEdge(u, v)) {
       --c;
     }
@@ -158,14 +157,14 @@ inline std::unique_ptr<Graph> GenerateRandomGraph(size_t num_of_vertexes,
   return g;
 }
 
-inline std::unique_ptr<Graph>
-GenerateRandomDirectedGraph(size_t num_of_vertexes, size_t num_of_edges) {
-  auto g = std::make_unique<Graph>(num_of_vertexes, true);
-  size_t c = std::min(num_of_edges, num_of_vertexes * num_of_vertexes);
+inline std::unique_ptr<Graph> GenerateRandomDirectedGraph(size_t num_vertexes,
+                                                          size_t num_edges) {
+  auto g = std::make_unique<Graph>(num_vertexes, true);
+  size_t c = std::min(num_edges, num_vertexes * num_vertexes);
   Random rnd(time(nullptr));
   while (c) {
-    unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes,
-             v = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes;
+    unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_vertexes,
+             v = static_cast<unsigned>(rnd.NextInt()) % num_vertexes;
     if (g->AddEdge(u, v)) {
       --c;
     }

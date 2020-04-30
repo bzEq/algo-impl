@@ -137,9 +137,9 @@ struct PushAndRelabel {
 namespace {
 
 inline std::unique_ptr<Network>
-GenerateRandomNetwork(const size_t num_of_vertexes, const size_t num_of_edges,
+GenerateRandomNetwork(const size_t num_vertexes, const size_t num_edges,
                       const unsigned max_capacity) {
-  auto g = GenerateRandomDirectedGraph(num_of_vertexes, num_of_edges);
+  auto g = GenerateRandomDirectedGraph(num_vertexes, num_edges);
   auto network = std::make_unique<Network>(g);
   Random rnd(std::time(nullptr));
   for (unsigned u = 0; u < network->size; ++u) {
