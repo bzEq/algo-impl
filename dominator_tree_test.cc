@@ -323,4 +323,26 @@ TEST(DominatorTreeTest, RandomCFG) {
   }
 }
 
+static Graph *GetBenchmarkGraph() {
+  const unsigned n = 100000, m = 500000;
+  static auto g = GenerateRandomDirectedGraph(n, m);
+  return g.get();
+}
+
+TEST(DominatorTreeTest, Dumb) { GetBenchmarkGraph(); }
+
+TEST(DominatorTreeTest, BenchmarkSLT) {
+  auto g = GetBenchmarkGraph();
+  DominatorTree dt(*g);
+  dt.CalculateDTViaSLT();
+  dt.CalculateDF();
+}
+
+TEST(DominatorTreeTest, BenchmarkDataFlow) {
+  auto g = GetBenchmarkGraph();
+  DominatorTree dt(*g);
+  dt.CalculateDTViaDataFlow();
+  dt.CalculateDF();
+}
+
 } // namespace
