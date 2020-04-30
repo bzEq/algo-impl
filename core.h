@@ -145,10 +145,8 @@ private:
 inline std::unique_ptr<Graph> GenerateRandomGraph(size_t num_of_vertexes,
                                                   size_t num_of_edges) {
   auto g = std::make_unique<Graph>(num_of_vertexes);
-  unsigned c =
-      std::min(num_of_edges, g->is_directed
-                                 ? num_of_vertexes * (num_of_vertexes - 1)
-                                 : num_of_vertexes * (num_of_vertexes - 1) / 2);
+  size_t c =
+      std::min(num_of_edges, num_of_vertexes * (num_of_vertexes - 1) / 2);
   Random rnd(time(nullptr));
   while (c) {
     unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes,
@@ -163,7 +161,7 @@ inline std::unique_ptr<Graph> GenerateRandomGraph(size_t num_of_vertexes,
 inline std::unique_ptr<Graph>
 GenerateRandomDirectedGraph(size_t num_of_vertexes, size_t num_of_edges) {
   auto g = std::make_unique<Graph>(num_of_vertexes, true);
-  unsigned c = std::min(num_of_edges, num_of_vertexes * num_of_vertexes);
+  size_t c = std::min(num_of_edges, num_of_vertexes * num_of_vertexes);
   Random rnd(time(nullptr));
   while (c) {
     unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_of_vertexes,
