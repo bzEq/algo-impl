@@ -10,8 +10,7 @@ struct Network {
   std::unique_ptr<Graph> graph;
   const size_t size;
   const unsigned source, target;
-  std::map<std::tuple<unsigned, unsigned>, int> capacity;
-  std::map<std::tuple<unsigned, unsigned>, int> flow;
+  std::map<std::tuple<unsigned, unsigned>, int> capacity, flow, cost;
 
   explicit Network(std::unique_ptr<Graph> &graph, unsigned source,
                    unsigned target)
@@ -29,10 +28,23 @@ struct Network {
     std::get<0>(capacity.insert({{u, v}, 0}))->second = c;
   }
 
+  void InitCost(unsigned u, unsigned v, const int c) {
+    assert(u != v);
+    assert(graph->succ[u].count(v));
+    std::get<0>(cost.insert({{u, v}, 0}))->second = c;
+  }
+
   int GetCapacity(unsigned u, unsigned v) {
     auto it = capacity.find({u, v});
     if (it == capacity.end())
       return 0;
+    return it->second;
+  }
+
+  int GetCost(unsigned u, unsigned v) {
+    auto it = cost.find({u, v});
+    if (it == cost.end())
+      return 1;
     return it->second;
   }
 
