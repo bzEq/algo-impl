@@ -21,8 +21,8 @@ struct Sched {
       sub_pos[u].set(u);
     };
     auto non_tree_visit = [&](unsigned u, unsigned v) {
-      assert(dfo[v] < dfo[u]);
-      sub_pos[u] |= sub_pos[v];
+      if (dfo[v] < dfo[u])
+        sub_pos[u] |= sub_pos[v];
     };
     auto post_visit = [&](unsigned u, unsigned parent) {
       rpo[u] = (size - 1) - depth_post_order;
@@ -89,6 +89,21 @@ TEST(SchedTest, Basic1) {
   dag.AddEdge(1, 2);
   dag.AddEdge(2, 3);
   dag.AddEdge(3, 4);
+  dag.AddEdge(4, 5);
+  assert(IsDAG(dag));
+  Sched s(dag);
+  auto result = s.Group();
+  Sched::OutputResult(std::cout, result);
+}
+
+TEST(SchedTest, Basic2) {
+  Graph dag(6, true);
+  dag.AddEdge(0, 1);
+  dag.AddEdge(1, 2);
+  dag.AddEdge(2, 3);
+  dag.AddEdge(0, 4);
+  dag.AddEdge(1, 4);
+  dag.AddEdge(2, 5);
   dag.AddEdge(4, 5);
   assert(IsDAG(dag));
   Sched s(dag);
