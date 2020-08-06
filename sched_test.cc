@@ -33,8 +33,12 @@ struct Sched {
     IterativeDepthFirstVisit(graph, pre_visit, non_tree_visit, post_visit);
     std::vector<unsigned> worklist(size);
     std::iota(worklist.begin(), worklist.end(), 0);
+    std::vector<unsigned> bfo(size, UNDEF);
+    unsigned breadth_first_order = 0;
+    auto bfs_visit = [&](unsigned u) { bfo[u] = breadth_first_order++; };
+    IterativeBreadthFirstVisit(graph, bfs_visit);
     std::sort(worklist.begin(), worklist.end(),
-              [&](unsigned u, unsigned v) { return rpo[u] < rpo[v]; });
+              [&](unsigned u, unsigned v) { return bfo[u] < bfo[v]; });
     std::vector<std::vector<unsigned>> result;
     std::vector<unsigned> active_group;
     std::bitset<kMaxSize> active_set;
