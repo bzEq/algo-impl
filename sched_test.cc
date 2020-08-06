@@ -13,6 +13,7 @@ struct Sched {
   std::vector<std::vector<unsigned>> Group() {
     assert(IsDAG(graph));
     const size_t size = graph.size;
+    assert(size <= kMaxSize);
     std::vector<unsigned> dfo(size, UNDEF), rpo(size, UNDEF);
     unsigned depth_first_order = 0, depth_post_order = 0;
     auto pre_visit = [&](unsigned parent, unsigned u) {
