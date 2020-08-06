@@ -4,6 +4,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <queue>
 #include <random>
 #include <set>
 #include <time.h>
@@ -30,6 +31,33 @@ struct Graph {
     return std::get<1>(res);
   }
 };
+
+inline void
+IterativeBreadthFirstVisit(const Graph &graph,
+                           const std::function<void(unsigned v)> &visit) {
+  const size_t size = graph.size;
+  if (!size)
+    return;
+  std::vector<bool> visited(size, false);
+  auto BFS = [&](unsigned o) {
+    std::queue<unsigned> worklist;
+    worklist.push(o);
+    while (!worklist.empty()) {
+      unsigned u = worklist.front();
+      worklist.pop();
+      if (visited[u])
+        continue;
+      visit(u);
+      visited[u] = true;
+      for (unsigned v : graph.succ[u])
+        if (visited[v])
+          worklist.push(v);
+    }
+  };
+  for (unsigned u = 0; u < size; ++u)
+    if (!visited[u])
+      BFS(u);
+}
 
 inline void IterativeDepthFirstVisit(
     const Graph &graph,
