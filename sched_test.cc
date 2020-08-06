@@ -53,6 +53,15 @@ struct Sched {
       result.emplace_back(std::move(active_group));
     return result;
   }
+
+  static void OutputResult(std::ostream &os,
+                           const std::vector<std::vector<unsigned>> &result) {
+    for (size_t i = 0; i < result.size(); ++i) {
+      os << "Group #" << i << ":\n";
+      for (unsigned u : result[i])
+        os << u << std::endl;
+    }
+  }
 };
 
 TEST(SchedTest, Basic) {
@@ -66,9 +75,18 @@ TEST(SchedTest, Basic) {
   assert(IsDAG(dag));
   Sched s(dag);
   auto result = s.Group();
-  for (size_t i = 0; i < result.size(); ++i) {
-    std::cout << "Group #" << i << ":\n";
-    for (unsigned u : result[i])
-      std::cout << u << std::endl;
-  }
+  Sched::OutputResult(std::cout, result);
+}
+
+TEST(SchedTest, Basic1) {
+  Graph dag(6, true);
+  dag.AddEdge(0, 1);
+  dag.AddEdge(1, 2);
+  dag.AddEdge(2, 3);
+  dag.AddEdge(3, 4);
+  dag.AddEdge(4, 5);
+  assert(IsDAG(dag));
+  Sched s(dag);
+  auto result = s.Group();
+  Sched::OutputResult(std::cout, result);
 }
