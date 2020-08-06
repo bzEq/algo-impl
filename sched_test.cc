@@ -38,12 +38,12 @@ struct Sched {
     auto bfs_visit = [&](unsigned u) { bfo[u] = breadth_first_order++; };
     IterativeBreadthFirstVisit(graph, bfs_visit);
     std::sort(worklist.begin(), worklist.end(),
-              [&](unsigned u, unsigned v) { return bfo[u] < bfo[v]; });
+              [&](unsigned u, unsigned v) { return bfo[u] > bfo[v]; });
     std::vector<std::vector<unsigned>> result;
     std::vector<unsigned> active_group;
     std::bitset<kMaxSize> active_set;
     for (unsigned u : worklist) {
-      if (!active_set.test(u)) {
+      if ((active_set & sub_pos[u]).none()) {
         active_set |= sub_pos[u];
         active_group.emplace_back(u);
       } else {
@@ -76,6 +76,7 @@ TEST(SchedTest, Basic) {
   dag.AddEdge(1, 4);
   dag.AddEdge(2, 4);
   dag.AddEdge(2, 5);
+  dag.AddEdge(5, 4);
   assert(IsDAG(dag));
   Sched s(dag);
   auto result = s.Group();
