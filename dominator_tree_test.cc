@@ -2,6 +2,7 @@
 
 #include "core.h"
 
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <iostream>
 

@@ -1,7 +1,8 @@
 #include "core.h"
 
-#include "gtest/gtest.h"
+#include <algorithm>
 #include <bitset>
+#include <gtest/gtest.h>
 #include <vector>
 
 struct Sched {

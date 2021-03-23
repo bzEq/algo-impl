@@ -97,13 +97,13 @@ struct PushAndRelabel {
   }
 
   void Relabel(unsigned u) {
-    unsigned dis = INF;
+    unsigned h = INF;
     for (unsigned v = 0; v < network.size; ++v) {
       if (network.GetResidualCapacity(u, v) > 0)
-        dis = std::min(dis, height[v]);
+        h = std::min(h, height[v]);
     }
-    if (dis != INF)
-      height[u] = dis + 1;
+    if (h != INF)
+      height[u] = h + 1;
   }
 
   void Discharge(unsigned u) {
