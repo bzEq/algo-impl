@@ -7,6 +7,7 @@ struct HopfieldNetwork {
   Graph &graph;
   std::map<std::tuple<unsigned, unsigned>, Float> weight;
   std::map<unsigned, int> states;
+  std::map<unsigned, Float> threshold;
   explicit HopfieldNetwork(Graph &graph) : graph(graph) {}
   void SetLink(unsigned u, unsigned v, Float w) {
     graph.AddEdge(u, v);
@@ -17,7 +18,7 @@ struct HopfieldNetwork {
     Float sum = 0;
     for (auto v : graph.pred[u])
       sum += weight[{v, u}] * states[v];
-    if (sum >= 0) {
+    if (sum >= threshold[u]) {
       states[u] = 1;
       return true;
     }
@@ -53,6 +54,37 @@ TEST(HopfieldNetworkTest, Flip) {
   EXPECT_TRUE(hn.states[1] == 0);
   EXPECT_TRUE(hn.states[2] == 0);
   EXPECT_TRUE(hn.states[3] == 0);
+}
+
+TEST(HopfieldNetwork, EightRooks) {
+  Graph graph(64, false);
+  HopfieldNetwork hn(graph);
+  for (unsigned u = 0; u < graph.size; ++u) {
+    hn.threshold[u] = -1;
+  }
+  for (unsigned i = 0; i < 8; ++i) {
+    unsigned base = 8 * i;
+    for (unsigned j = 0; j < 8; ++j) {
+      for (unsigned k = j + 1; k < 8; ++k) {
+        hn.SetLink(base + j, base + k, -2);
+      }
+    }
+  }
+  for (unsigned i = 0; i < 8; ++i) {
+    for (unsigned j = 0; j < 8; ++j) {
+      for (unsigned k = j + 1; k < 8; ++k) {
+        hn.SetLink(i + j * 8, i + k * 8, -2);
+      }
+    }
+  }
+  hn.Iterate();
+  for (unsigned u = 0; u < graph.size;) {
+    std::cout << hn.states[u++];
+    if (u & 7)
+      std::cout << " ";
+    else
+      std::cout << std::endl;
+  }
 }
 
 } // namespace
