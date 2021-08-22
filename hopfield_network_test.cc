@@ -35,7 +35,19 @@ struct HopfieldNetwork {
         if (old != states[u])
           changed = true;
       }
+      // std::cout << energy() << std::endl;
     }
+  }
+  Float energy() {
+    Float T = 0, W = 0;
+    for (int i = 0; i < graph.size; ++i) {
+      T += threshold[i] * states[i];
+      for (int j = 0; j < graph.size; ++j) {
+        W += states[i] * states[j] * weight[{i, j}];
+      }
+    }
+    Float E = -0.5 * W + T;
+    return E;
   }
 };
 
