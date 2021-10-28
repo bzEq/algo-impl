@@ -22,12 +22,12 @@ struct LocalTwoRegAlloc {
     dp[1].resize(n);
     switch (bb[0]) {
     case USE_A:
-      dp[0][0] = 1;
+      dp[0][0] = 2;
       dp[1][0] = 0;
       break;
     case USE_B:
       dp[0][0] = 0;
-      dp[1][0] = 1;
+      dp[1][0] = 2;
       break;
     }
     for (size_t i = 1; i < n; ++i) {
@@ -53,11 +53,11 @@ TEST(LocalTwoRegAlloc, Case0) {
 TEST(LocalTwoRegAlloc, Case1) {
   std::vector<int> bb{USE_A, USE_B};
   LocalTwoRegAlloc ra(bb);
-  EXPECT_TRUE(ra.CalcMemAccessCost() == 1);
+  EXPECT_TRUE(ra.CalcMemAccessCost() == 2);
 }
 
 TEST(LocalTwoRegAlloc, Case2) {
-  std::vector<int> bb{USE_A, USE_B, USE_A, USE_B, USE_A, USE_B, USE_A};
+  std::vector<int> bb{USE_B, USE_A, USE_B, USE_A};
   LocalTwoRegAlloc ra(bb);
   int cost = ra.CalcMemAccessCost();
   std::cout << cost << std::endl;
