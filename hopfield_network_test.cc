@@ -14,6 +14,7 @@ struct HopfieldNetwork {
     std::get<0>(weight.insert({{u, v}, 0}))->second = w;
     std::get<0>(weight.insert({{v, u}, 0}))->second = w;
   }
+
   bool Activate(unsigned u) {
     Float sum = 0;
     for (auto v : graph.pred[u])
@@ -22,10 +23,14 @@ struct HopfieldNetwork {
       states[u] = 1;
       return true;
     }
+    states[u] = 0;
     return false;
   }
 
-  void SetState(unsigned u, int state) { states[u] = state; }
+  void SetState(unsigned u, int state) {
+    assert(state == 0 || state == 1);
+    states[u] = state;
+  }
 
   void Iterate(size_t max_num_iteration = 1024, std::ostream *out = nullptr) {
     bool changed = true;
@@ -73,6 +78,9 @@ namespace {
 TEST(HopfieldNetworkTest, Flip) {
   Graph graph(4, false);
   HopfieldNetwork hn(graph);
+  for (unsigned u = 0; u < graph.size; ++u) {
+    hn.threshold[u] = -1;
+  }
   hn.SetLink(0, 1, -2);
   hn.SetLink(0, 2, -2);
   hn.SetLink(0, 3, -2);
@@ -109,7 +117,13 @@ TEST(HopfieldNetwork, EightRooks) {
     }
   }
   hn.Iterate();
-  hn.Print(std::cout);
+  for (unsigned u = 0; u < graph.size;) {
+    std::cout << hn.states[u++];
+    if (u & 7)
+      std::cout << "\t";
+    else
+      std::cout << "\n";
+  }
 }
 
 TEST(HopfieldNetwork, Random) {
@@ -119,7 +133,7 @@ TEST(HopfieldNetwork, Random) {
   HopfieldNetwork hn(g);
   for (unsigned u = 0; u < g.size; ++u) {
     hn.threshold[u] = rnd.Next() - 0.5;
-    hn.states[u] = rnd.NextInt() % 2 ? -1 : 1;
+    hn.states[u] = rnd.NextInt() % 2 ? 0 : 1;
   }
   size_t num_edges = rnd.NextInt() % (M * M);
   for (size_t i = 0; i < num_edges; ++i) {
