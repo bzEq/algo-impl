@@ -119,7 +119,7 @@ TEST(HopfieldNetwork, Random) {
   HopfieldNetwork hn(g);
   for (unsigned u = 0; u < g.size; ++u) {
     hn.threshold[u] = rnd.Next() - 0.5;
-    hn.states[u] = rnd.NextInt() % 3 - 1;
+    hn.states[u] = rnd.NextInt() % 2 ? -1 : 1;
   }
   size_t num_edges = rnd.NextInt() % (M * M);
   for (size_t i = 0; i < num_edges; ++i) {
