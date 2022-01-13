@@ -24,10 +24,13 @@ struct HopfieldNetwork {
     }
     return false;
   }
+
   void SetState(unsigned u, int state) { states[u] = state; }
-  void Iterate(size_t max_num_iteration = 1024) {
+
+  void Iterate(size_t max_num_iteration = 1024, std::ostream *out = nullptr) {
     bool changed = true;
-    while (max_num_iteration-- && changed) {
+    Float prev = std::numeric_limits<Float>::max();
+    for (size_t i = 0; i < max_num_iteration && changed; ++i) {
       changed = false;
       for (unsigned u = 0; u < graph.size; ++u) {
         int old = states[u];
@@ -35,9 +38,14 @@ struct HopfieldNetwork {
         if (old != states[u])
           changed = true;
       }
-      // std::cout << energy() << std::endl;
+      Float current = energy();
+      assert(current <= prev);
+      prev = current;
+      if (out != nullptr)
+        *out << "Energy after iteration #" << i << ": " << current << std::endl;
     }
   }
+
   Float energy() {
     Float T = 0, W = 0;
     for (int i = 0; i < graph.size; ++i) {
@@ -48,6 +56,16 @@ struct HopfieldNetwork {
     }
     Float E = -0.5 * W + T;
     return E;
+  }
+
+  void Print(std::ostream &out) {
+    for (unsigned u = 0; u < graph.size; ++u) {
+      out << states[u];
+      if (u == graph.size - 1)
+        out << "\n";
+      else
+        out << " ";
+    }
   }
 };
 
@@ -66,6 +84,7 @@ TEST(HopfieldNetworkTest, Flip) {
   EXPECT_TRUE(hn.states[1] == 0);
   EXPECT_TRUE(hn.states[2] == 0);
   EXPECT_TRUE(hn.states[3] == 0);
+  hn.Print(std::cout);
 }
 
 TEST(HopfieldNetwork, EightRooks) {
@@ -90,13 +109,26 @@ TEST(HopfieldNetwork, EightRooks) {
     }
   }
   hn.Iterate();
-  for (unsigned u = 0; u < graph.size;) {
-    std::cout << hn.states[u++];
-    if (u & 7)
-      std::cout << " ";
-    else
-      std::cout << std::endl;
+  hn.Print(std::cout);
+}
+
+TEST(HopfieldNetwork, Random) {
+  Random rnd(std::time(nullptr));
+  const uint64_t M = 1 << 10;
+  Graph g(rnd.NextInt() % M, false);
+  HopfieldNetwork hn(g);
+  for (unsigned u = 0; u < g.size; ++u) {
+    hn.threshold[u] = rnd.Next();
+    hn.states[u] = rnd.NextInt() % 3 - 1;
   }
+  size_t num_edges = rnd.NextInt() % (M * M);
+  for (size_t i = 0; i < num_edges; ++i) {
+    unsigned u = rnd.NextInt() % g.size;
+    unsigned v = rnd.NextInt() % g.size;
+    hn.SetLink(u, v, rnd.Next());
+  }
+  hn.Iterate(1024, &std::cout);
+  hn.Print(std::cout);
 }
 
 } // namespace
