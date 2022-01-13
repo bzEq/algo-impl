@@ -132,7 +132,7 @@ cc_test(
     ],
     copts=[
         '-std=c++14',
-        '-O3',
+        '-Ofast',
         '-march=native',
         '-Wall',
         '-fno-rtti',
