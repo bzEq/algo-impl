@@ -115,17 +115,17 @@ TEST(HopfieldNetwork, EightRooks) {
 TEST(HopfieldNetwork, Random) {
   Random rnd(std::time(nullptr));
   const uint64_t M = 1 << 10;
-  Graph g(rnd.NextInt() % M, false);
+  Graph g(M, false);
   HopfieldNetwork hn(g);
   for (unsigned u = 0; u < g.size; ++u) {
-    hn.threshold[u] = rnd.Next();
+    hn.threshold[u] = rnd.Next() - 0.5;
     hn.states[u] = rnd.NextInt() % 3 - 1;
   }
   size_t num_edges = rnd.NextInt() % (M * M);
   for (size_t i = 0; i < num_edges; ++i) {
     unsigned u = rnd.NextInt() % g.size;
     unsigned v = rnd.NextInt() % g.size;
-    hn.SetLink(u, v, rnd.Next());
+    hn.SetLink(u, v, rnd.Next() - 0.5);
   }
   hn.Iterate(1024, &std::cout);
   hn.Print(std::cout);
