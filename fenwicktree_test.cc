@@ -7,6 +7,7 @@
 
 struct FenwickTree {
   std::vector<int64_t> s, d;
+  FenwickTree() = default;
   explicit FenwickTree(size_t len) : s(len, 0), d(len, 0) {}
 
   FenwickTree &Add(size_t p, int64_t delta) {
@@ -30,7 +31,7 @@ struct FenwickTree {
   }
 
   int64_t GetValue(size_t i) {
-    assert(i >= 0);
+    if (i == 0) return GetSum(0);
     return GetSum(i) - GetSum(i - 1);
   }
 };
@@ -43,5 +44,12 @@ TEST(FenwickTreeTest, Basic) {
   ft.Add(4, 6, -1);
   EXPECT_TRUE(ft.GetValue(4) == 0);
   EXPECT_TRUE(ft.GetValue(5) == 1);
+  EXPECT_TRUE(ft.GetValue(0) == 1);
 }
+
+TEST(FenwickTreeTest, Empty) {
+  FenwickTree ft;
+  EXPECT_TRUE(ft.GetValue(0) == 0);
+}
+
 } // namespace
