@@ -14,7 +14,7 @@ struct LocalTwoRegAlloc {
   int CalcMemAccessCost() {
     if (bb.empty())
       return 0;
-    const int n = bb.size();
+    const size_t n = bb.size();
     std::vector<std::vector<int>> dp(2);
     // 0 for A on stack, B in register.
     dp[0].resize(n);
