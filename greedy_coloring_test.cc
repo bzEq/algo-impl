@@ -34,7 +34,7 @@ struct GreedyColoring {
   }
 };
 
-TEST(LCATest, Simple) {
+TEST(GCTest, Simple) {
   UndirectedGraph g(2);
   g.AddEdge(0, 1);
   GreedyColoring GC(g);
@@ -42,7 +42,7 @@ TEST(LCATest, Simple) {
   EXPECT_TRUE(GC.NumColors() == 2);
 }
 
-TEST(LCATest, Simple3) {
+TEST(GCTest, Simple3) {
   UndirectedGraph g(3);
   g.AddEdge(0, 1);
   g.AddEdge(0, 2);
@@ -51,7 +51,7 @@ TEST(LCATest, Simple3) {
   EXPECT_TRUE(GC.NumColors() == 2);
 }
 
-TEST(LCATest, Triangle) {
+TEST(GCTest, Triangle) {
   UndirectedGraph g(3);
   g.AddEdge(0, 1);
   g.AddEdge(0, 2);
@@ -61,7 +61,7 @@ TEST(LCATest, Triangle) {
   EXPECT_TRUE(GC.NumColors() == 3);
 }
 
-TEST(LCATest, CompleteGraph) {
+TEST(GCTest, CompleteGraph) {
   const size_t n = 1UL << 10;
   UndirectedGraph g(n);
   for (size_t i = 0; i < n; ++i)
@@ -72,7 +72,7 @@ TEST(LCATest, CompleteGraph) {
   EXPECT_TRUE(GC.NumColors() == n);
 }
 
-TEST(LCATest, Random) {
+TEST(GCTest, Random) {
   UndirectedGraph g(1UL << 16);
   UndirectedGraph::RandomGraph(g, 1UL << 20);
   GreedyColoring GC(g);
