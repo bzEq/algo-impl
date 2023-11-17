@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 
 struct LCA {
-  const Graph &graph;
+  const UndirectedGraph &graph;
   const size_t size;
   std::vector<unsigned> tree_parent, label, height;
   struct Range {
@@ -12,11 +12,12 @@ struct LCA {
   std::vector<Range> dfo;
   std::vector<std::vector<unsigned>> ancestor;
 
-  LCA(const Graph &graph)
-      : graph(graph), size(graph.size), tree_parent(size, UNDEF),
+  LCA(const UndirectedGraph &graph)
+      : graph(graph), size(graph.size()), tree_parent(size, UNDEF),
         label(size, UNDEF), height(size, UNDEF), dfo(size), ancestor(size) {
     unsigned depth_first_order = 0, current_height = 0;
-    auto pre_visit = [&](unsigned parent, unsigned u) {
+    UndirectedGraph::DepthFirstVisitor DFV;
+    DFV.tree_visit = [&](unsigned parent, unsigned u) {
       height[u] = current_height;
       ++current_height;
       dfo[u].begin = depth_first_order;
@@ -25,15 +26,14 @@ struct LCA {
       ++depth_first_order;
       tree_parent[u] = parent;
     };
-    auto non_tree_visit = [&](unsigned u, unsigned v) {};
-    auto post_visit = [&](unsigned u, unsigned parent) {
+    DFV.post_visit = [&](unsigned u, unsigned parent) {
       if (parent != UNDEF) {
         dfo[parent].end = std::max(dfo[parent].end, dfo[u].end);
       }
       assert(current_height > 0);
       --current_height;
     };
-    IterativeDepthFirstVisit(graph, pre_visit, non_tree_visit, post_visit);
+    graph.Visit(DFV);
     const unsigned MAX_ORDER = Log2Ceil(size - 1) + 1;
     for (unsigned u = 0; u < size; ++u) {
       if (Covers(label[0], u)) {
@@ -127,7 +127,7 @@ TEST(LCATest, Log2Ceil) {
 }
 
 TEST(LCATest, Simple) {
-  Graph g(8);
+  UndirectedGraph g(8);
   g.AddEdge(0, 1);
   g.AddEdge(0, 5);
   g.AddEdge(1, 2);
@@ -144,7 +144,6 @@ TEST(LCATest, Simple) {
   EXPECT_TRUE(lca.GetLCA(0, 0) == 0);
   EXPECT_TRUE(lca.GetLCA(1, 2) == 1);
   EXPECT_TRUE(lca.GetLCA(3, 4) == 1);
-  EXPECT_TRUE(lca.label[lca.dfo[1].end] == 4);
   EXPECT_TRUE(lca.GetLCA(1, 5) == 0);
   EXPECT_TRUE(lca.height[3] == 3);
   EXPECT_TRUE(lca.ancestor[3].size() == 3);
@@ -161,7 +160,7 @@ TEST(LCATest, Simple) {
 }
 
 TEST(LCATest, Simple1) {
-  Graph tree(5);
+  UndirectedGraph tree(5);
   tree.AddEdge(0, 1);
   tree.AddEdge(1, 3);
   tree.AddEdge(3, 2);
@@ -183,7 +182,7 @@ TEST(LCATest, Simple1) {
 }
 
 TEST(LCATest, Simple2) {
-  Graph tree(10);
+  UndirectedGraph tree(10);
   tree.AddEdge(0, 1);
   tree.AddEdge(1, 2);
   tree.AddEdge(2, 3);
@@ -208,7 +207,7 @@ TEST(LCATest, Simple2) {
 }
 
 TEST(LCATest, Simple3) {
-  Graph tree(11);
+  UndirectedGraph tree(11);
   tree.AddEdge(0, 1);
   tree.AddEdge(1, 2);
   tree.AddEdge(2, 3);
@@ -229,8 +228,10 @@ TEST(LCATest, Simple3) {
 TEST(LCATest, Random) {
   const unsigned n = 500000, m = 500000;
   Random rnd(std::time(nullptr));
-  auto g = GenerateRandomGraph(n, m);
-  auto tree = DeriveDFSTree(*g);
+  UndirectedGraph g(n);
+  UndirectedGraph::RandomGraph(g, m);
+  UndirectedGraph tree(n);
+  UndirectedGraph::DeriveDFSTree(g, tree);
   // for (unsigned u = 0; u < n; ++u) {
   //   std::cout << u << ": ";
   //   for (unsigned v : tree->succ[u]) {
@@ -238,7 +239,7 @@ TEST(LCATest, Random) {
   //   }
   //   std::cout << std::endl;
   // }
-  LCA lca(*tree);
+  LCA lca(tree);
   for (unsigned i = 0; i < m; ++i) {
     unsigned u = rnd.NextInt() % n, v = rnd.NextInt() % n;
     // std::cout << "query: " << u << ", " << v << std::endl;

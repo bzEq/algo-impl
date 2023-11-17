@@ -7,15 +7,15 @@
 #include <iostream>
 
 struct DominatorTree {
-  const Graph &cfg;
+  const DirectedGraph &cfg;
   const size_t size;
   std::vector<unsigned> dfo, rpo, dfs_tree_parent, semi, idom, lt_ancestor,
       best;
   std::vector<std::set<unsigned>> dominance_frontier, lt_bucket;
   std::function<bool(unsigned, unsigned)> dfs_less, dfs_greater;
 
-  DominatorTree(const Graph &graph)
-      : cfg(graph), size(cfg.size), semi(size, UNDEF), idom(size, UNDEF),
+  DominatorTree(const DirectedGraph &graph)
+      : cfg(graph), size(cfg.size()), semi(size, UNDEF), idom(size, UNDEF),
         lt_ancestor(size, UNDEF), best(size, UNDEF), dominance_frontier(size),
         lt_bucket(size), dfs_less([this](const unsigned u, const unsigned v) {
           return dfo[u] < dfo[v];
@@ -23,7 +23,8 @@ struct DominatorTree {
         dfs_greater([this](const unsigned u, const unsigned v) {
           return dfo[u] > dfo[v];
         }) {
-    SimpleIterativeDFS(cfg, &dfo, &rpo, &dfs_tree_parent);
+    assert(cfg.entry() == 0);
+    DirectedGraph::DepthFirstLabel(cfg, &dfs_tree_parent, &rpo, &dfo, nullptr);
   }
 
   void Link(unsigned u, unsigned v) {
@@ -47,7 +48,9 @@ struct DominatorTree {
   }
 
   bool ReachableFromOrigin(unsigned w) {
-    assert(dfo[0] != UNDEF && dfo[w] != UNDEF && dfo[0] <= dfo[w]);
+    if (dfo[w] == UNDEF)
+      return false;
+    assert(dfo[0] != UNDEF && dfo[0] <= dfo[w]);
     return (size - 1 - rpo[0]) >= (size - 1 - rpo[w]);
   }
 
@@ -62,7 +65,7 @@ struct DominatorTree {
         continue;
       const unsigned p = dfs_tree_parent[w];
       semi[w] = p;
-      for (unsigned v : cfg.pred[w]) {
+      for (unsigned v : cfg.pred(w)) {
         if (!ReachableFromOrigin(v))
           continue;
         if (dfs_less(v, w)) {
@@ -115,7 +118,7 @@ struct DominatorTree {
       for (auto u : worklist) {
         if (!ReachableFromOrigin(u) || idom[u] == UNDEF)
           continue;
-        for (auto v : cfg.succ[u]) {
+        for (auto v : cfg.succ(u)) {
           unsigned new_idom = idom[v];
           if (new_idom != UNDEF)
             new_idom = CalculateNCA(new_idom, u);
@@ -136,7 +139,7 @@ struct DominatorTree {
     for (unsigned u = 0; u < size; ++u) {
       if (idom[u] == UNDEF)
         continue;
-      for (const unsigned v : cfg.succ[u]) {
+      for (const unsigned v : cfg.succ(u)) {
         if (idom[v] == UNDEF)
           continue;
         unsigned nca = CalculateNCA(u, v);
@@ -154,7 +157,8 @@ struct DominatorTree {
 
 namespace {
 TEST(DominatorTreeTest, LinearGraph) {
-  Graph g(5, true);
+  DirectedGraph g(5);
+  g.SetEntry(0);
   g.AddEdge(0, 1);
   g.AddEdge(1, 2);
   g.AddEdge(2, 3);
@@ -175,7 +179,8 @@ TEST(DominatorTreeTest, LinearGraph) {
 }
 
 TEST(DominatorTreeTest, Graph0) {
-  Graph g(6, true);
+  DirectedGraph g(6);
+  g.SetEntry(0);
   g.AddEdge(0, 1);
   g.AddEdge(1, 2);
   g.AddEdge(1, 3);
@@ -200,7 +205,8 @@ TEST(DominatorTreeTest, Graph0) {
 }
 
 TEST(DominatorTreeTest, Graph1) {
-  Graph g(3, true);
+  DirectedGraph g(3);
+  g.SetEntry(0);
   g.AddEdge(0, 1);
   g.AddEdge(1, 2);
   DominatorTree dt(g);
@@ -210,7 +216,8 @@ TEST(DominatorTreeTest, Graph1) {
 // Based on the figure of
 // https://www.cs.princeton.edu/courses/archive/fall03/cs528/handouts/a%20fast%20algorithm%20for%20finding.pdf
 TEST(DominatorTreeTest, Tarjan79) {
-  Graph g(13, true);
+  DirectedGraph g(13);
+  g.SetEntry(0);
   g.AddEdge(0, 1);  // R->A
   g.AddEdge(0, 2);  // R->B
   g.AddEdge(0, 3);  // R->C
@@ -256,7 +263,8 @@ TEST(DominatorTreeTest, Tarjan79) {
 }
 
 TEST(DominatorTreeTest, SelfLoop) {
-  Graph g(3, true);
+  DirectedGraph g(3);
+  g.SetEntry(0);
   g.AddEdge(0, 1);
   g.AddEdge(1, 1);
   g.AddEdge(1, 2);
@@ -275,7 +283,8 @@ TEST(DominatorTreeTest, SelfLoop) {
 }
 
 TEST(DominatorTreeTest, SimpleLoop) {
-  Graph g(4, true);
+  DirectedGraph g(4);
+  g.SetEntry(0);
   g.AddEdge(0, 1);
   g.AddEdge(1, 2);
   g.AddEdge(2, 1);
@@ -296,7 +305,8 @@ TEST(DominatorTreeTest, SimpleLoop) {
 }
 
 TEST(DominatorTreeTest, WeirdGraph) {
-  Graph g(4, true);
+  DirectedGraph g(4);
+  g.SetEntry(0);
   g.AddEdge(1, 0);
   g.AddEdge(2, 0);
   g.AddEdge(1, 2);
@@ -313,9 +323,11 @@ TEST(DominatorTreeTest, WeirdGraph) {
 
 TEST(DominatorTreeTest, RandomCFG) {
   const unsigned n = 100000, m = 300000;
-  auto g = GenerateRandomDirectedGraph(n, m);
-  DominatorTree dt(*g);
-  DominatorTree dt1(*g);
+  DirectedGraph g(n);
+  DirectedGraph::RandomGraph(g, m);
+  g.SetEntry(0);
+  DominatorTree dt(g);
+  DominatorTree dt1(g);
   dt.CalculateDTViaSLT();
   dt1.CalculateDTViaDataFlow();
   for (unsigned u = 0; u < n; ++u) {
@@ -324,10 +336,17 @@ TEST(DominatorTreeTest, RandomCFG) {
   }
 }
 
-static Graph *GetBenchmarkGraph() {
+static DirectedGraph *GetBenchmarkGraph() {
   const unsigned n = 100000, m = 500000;
-  static auto g = GenerateRandomDirectedGraph(n, m);
-  return g.get();
+  struct Once {
+    DirectedGraph g;
+    Once() : g(n) {
+      DirectedGraph::RandomGraph(g, m);
+      g.SetEntry(0);
+    }
+  };
+  static Once o;
+  return &o.g;
 }
 
 TEST(DominatorTreeBenchmark, GenBenchmarkGraph) { GetBenchmarkGraph(); }

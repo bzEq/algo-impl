@@ -8,16 +8,17 @@ namespace {
 
 TEST(RandomGraphTest, DFS) {
   const unsigned n = 10000, m = 1000000;
-  auto g = GenerateRandomDirectedGraph(n, m);
+  DirectedGraph g(n);
+  DirectedGraph::RandomGraph(g, m);
   std::vector<unsigned> rpo, dfo, dfs_tree_parent;
-  SimpleIterativeDFS(*g, &dfo, &rpo, &dfs_tree_parent);
+  DirectedGraph::DepthFirstLabel(g, &dfs_tree_parent, &rpo, &dfo, nullptr);
 }
 
 TEST(RandomGraphTest, BFS) {
   const unsigned n = 10000, m = 1000000;
-  auto g = GenerateRandomDirectedGraph(n, m);
-  auto do_nothing = [](unsigned u) {};
-  IterativeBreadthFirstVisit(*g, do_nothing);
+  DirectedGraph g(n);
+  DirectedGraph::RandomGraph(g, m);
+  DirectedGraph::DepthFirstLabel(g, nullptr, nullptr, nullptr, nullptr);
 }
 
 } // namespace

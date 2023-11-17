@@ -7,30 +7,26 @@
 #include <queue>
 
 struct Network {
-  std::unique_ptr<Graph> graph;
+  // std::unique_ptr<Graph> graph;
+  const DirectedGraph &graph;
   const size_t size;
   const unsigned source, target;
   std::map<std::tuple<unsigned, unsigned>, int> capacity, flow, cost;
 
-  explicit Network(std::unique_ptr<Graph> &graph, unsigned source,
-                   unsigned target)
-      : graph(std::move(graph)), size(this->graph->size), source(source),
-        target(target) {}
+  explicit Network(const DirectedGraph &graph, unsigned source, unsigned target)
+      : graph(graph), size(graph.size()), source(source), target(target) {}
 
-  explicit Network(std::unique_ptr<Graph> &graph)
-      : graph(std::move(graph)), size(this->graph->size), source(0),
-        target(size - 1) {}
+  explicit Network(const DirectedGraph &graph)
+      : graph(graph), size(graph.size()), source(0), target(size - 1) {}
 
   void InitCapacity(unsigned u, unsigned v, const int c) {
     assert(u != v);
     assert(c >= 0);
-    assert(graph->succ[u].count(v));
     std::get<0>(capacity.insert({{u, v}, 0}))->second = c;
   }
 
   void InitCost(unsigned u, unsigned v, const int c) {
     assert(u != v);
-    assert(graph->succ[u].count(v));
     std::get<0>(cost.insert({{u, v}, 0}))->second = c;
   }
 
@@ -148,32 +144,39 @@ struct PushAndRelabel {
 
 namespace {
 
-inline std::unique_ptr<Network>
+struct GenNetwork {
+  DirectedGraph g;
+  Network n;
+  GenNetwork(size_t n) : g(n), n(g) {}
+};
+
+inline std::unique_ptr<GenNetwork>
 GenerateRandomNetwork(const size_t num_vertexes, const size_t num_edges,
                       const unsigned max_capacity) {
-  auto g = GenerateRandomDirectedGraph(num_vertexes, num_edges);
-  auto network = std::make_unique<Network>(g);
+  auto nw = std::make_unique<GenNetwork>(num_vertexes);
+  DirectedGraph::RandomGraph(nw->g, num_edges);
+  auto &network = nw->n;
   Random rnd(std::time(nullptr));
-  for (unsigned u = 0; u < network->size; ++u) {
-    for (auto v : network->graph->succ[u]) {
+  for (unsigned u = 0; u < network.size; ++u) {
+    for (auto v : network.graph.succ(u)) {
       if (u == v)
         continue;
       int c =
-          v == network->source ? 0 : (unsigned)rnd.NextInt() % max_capacity + 1;
-      network->InitCapacity(u, v, c);
+          v == network.source ? 0 : (unsigned)rnd.NextInt() % max_capacity + 1;
+      network.InitCapacity(u, v, c);
     }
   }
-  return network;
+  return nw;
 }
 
 TEST(MaxFlowTest, SimpleNetwork) {
-  auto g = std::make_unique<Graph>(5, true);
-  g->AddEdge(0, 1);
-  g->AddEdge(1, 2);
-  g->AddEdge(1, 3);
-  g->AddEdge(2, 3);
-  g->AddEdge(2, 4);
-  g->AddEdge(3, 4);
+  DirectedGraph g(5);
+  g.AddEdge(0, 1);
+  g.AddEdge(1, 2);
+  g.AddEdge(1, 3);
+  g.AddEdge(2, 3);
+  g.AddEdge(2, 4);
+  g.AddEdge(3, 4);
   Network network(g);
   network.InitCapacity(0, 1, 1);
   network.InitCapacity(1, 2, 2);
@@ -187,12 +190,12 @@ TEST(MaxFlowTest, SimpleNetwork) {
 }
 
 TEST(MaxFlowTest, LuoGu3376) {
-  auto g = std::make_unique<Graph>(4, true);
-  g->AddEdge(3, 1);
-  g->AddEdge(3, 2);
-  g->AddEdge(1, 2);
-  g->AddEdge(1, 0);
-  g->AddEdge(0, 2);
+  DirectedGraph g(4);
+  g.AddEdge(3, 1);
+  g.AddEdge(3, 2);
+  g.AddEdge(1, 2);
+  g.AddEdge(1, 0);
+  g.AddEdge(0, 2);
   Network network(g, 3, 2);
   network.InitCapacity(3, 1, 30);
   network.InitCapacity(3, 2, 20);
@@ -206,8 +209,8 @@ TEST(MaxFlowTest, LuoGu3376) {
 }
 
 TEST(MaxFlowTest, Partitioned) {
-  auto g = std::make_unique<Graph>(3, true);
-  g->AddEdge(0, 1);
+  DirectedGraph g(3);
+  g.AddEdge(0, 1);
   Network network(g);
   network.InitCapacity(0, 1, 1);
   PushAndRelabel calc(network);
@@ -217,7 +220,7 @@ TEST(MaxFlowTest, Partitioned) {
 
 TEST(MaxFlowTest, RandomNetwork) {
   auto network = GenerateRandomNetwork(1000, 1000, 1000);
-  PushAndRelabel calc(*network);
+  PushAndRelabel calc(network->n);
   calc.CalculateMaxFlow();
 }
 

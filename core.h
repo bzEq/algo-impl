@@ -1,157 +1,19 @@
 // Copyright (c) 2020 Kai Luo <gluokai@gmail.com>. All rights reserved.
 
 #include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <queue>
 #include <random>
+#include <ranges>
 #include <set>
-#include <time.h>
+#include <unordered_set>
 #include <vector>
-
-static constexpr unsigned UNDEF = ~0U;
-
-struct Graph {
-  const bool is_directed;
-  const size_t size;
-  std::vector<std::set<unsigned>> succ, pred;
-  Graph(size_t n, bool is_directed = false)
-      : is_directed(is_directed), size(n), succ(n), pred(n) {}
-
-  bool AddEdge(unsigned u, unsigned v) {
-    assert(u < succ.size() && v < succ.size() && "Invalid vertex id");
-    auto res = succ[u].insert(v);
-    pred[v].insert(u);
-    if (!is_directed) {
-      succ[v].insert(u);
-      pred[u].insert(v);
-    }
-    return std::get<1>(res);
-  }
-};
-
-inline void
-IterativeBreadthFirstVisit(const Graph &graph,
-                           const std::function<void(unsigned v)> &visit) {
-  const size_t size = graph.size;
-  if (!size)
-    return;
-  std::vector<bool> visited(size, false);
-  auto BFS = [&](unsigned o) {
-    std::queue<unsigned> worklist;
-    worklist.push(o);
-    while (!worklist.empty()) {
-      unsigned u = worklist.front();
-      worklist.pop();
-      if (visited[u])
-        continue;
-      visit(u);
-      visited[u] = true;
-      for (unsigned v : graph.succ[u])
-        if (visited[v])
-          worklist.push(v);
-    }
-  };
-  for (unsigned u = 0; u < size; ++u)
-    if (!visited[u])
-      BFS(u);
-}
-
-inline void IterativeDepthFirstVisit(
-    const Graph &graph,
-    const std::function<void(unsigned parent, unsigned u)> &pre_visit,
-    const std::function<void(unsigned u, unsigned v)> &non_tree_visit,
-    const std::function<void(unsigned u, unsigned parent)> &post_visit) {
-  if (!graph.size)
-    return;
-  const size_t size = graph.size;
-  std::vector<bool> visited(size, false);
-  struct State {
-    unsigned parent, u;
-    decltype(graph.succ[0].begin()) next;
-  };
-  std::function<void(unsigned)> DFS = [&](unsigned o) {
-    std::vector<State> dfs_stack;
-    dfs_stack.emplace_back(State{UNDEF, o, graph.succ[o].begin()});
-    while (!dfs_stack.empty()) {
-      State &s = dfs_stack.back();
-      if (!visited[s.u]) {
-        visited[s.u] = true;
-        pre_visit(s.parent, s.u);
-      }
-      for (; s.next != graph.succ[s.u].end(); ++s.next) {
-        if (!visited[*s.next])
-          break;
-        else
-          non_tree_visit(s.u, *s.next);
-      }
-      if (s.next == graph.succ[s.u].end()) {
-        post_visit(s.u, s.parent);
-        dfs_stack.pop_back();
-        continue;
-      }
-      unsigned v = *s.next;
-      ++s.next;
-      assert(v < size && !visited[v]);
-      dfs_stack.emplace_back(State{s.u, v, graph.succ[v].begin()});
-    }
-  };
-  for (unsigned u = 0; u < size; ++u)
-    if (!visited[u])
-      DFS(u);
-}
-
-inline void SimpleIterativeDFS(const Graph &graph, std::vector<unsigned> *dfo,
-                               std::vector<unsigned> *rpo,
-                               std::vector<unsigned> *dfs_tree_parent) {
-  unsigned depth_first_order = 0, depth_post_order = 0;
-  const size_t size = graph.size;
-  dfo->resize(size, UNDEF);
-  rpo->resize(size, UNDEF);
-  dfs_tree_parent->resize(size, UNDEF);
-  auto non_tree_visit = [](unsigned u, unsigned v) {};
-  auto pre_visit = [&](unsigned parent, unsigned u) {
-    (*dfs_tree_parent)[u] = parent;
-    (*dfo)[u] = depth_first_order++;
-  };
-  auto post_visit = [&](unsigned u, unsigned parent) {
-    (*rpo)[u] = (size - 1) - depth_post_order;
-    ++depth_post_order;
-  };
-  IterativeDepthFirstVisit(graph, pre_visit, non_tree_visit, post_visit);
-}
-
-inline bool IsDAG(const Graph &graph) {
-  bool answer = true;
-  unsigned depth_first_order = 0, depth_post_order = 0;
-  const size_t size = graph.size;
-  std::vector<unsigned> dfo(size, UNDEF), dpo(size, UNDEF);
-  auto non_tree_visit = [&](unsigned u, unsigned v) {
-    if (dfo[v] <= dfo[u] && dpo[v] == UNDEF)
-      answer = false;
-  };
-  auto pre_visit = [&](unsigned parent, unsigned u) {
-    dfo[u] = depth_first_order++;
-  };
-  auto post_visit = [&](unsigned u, unsigned parent) {
-    dpo[u] = depth_post_order++;
-  };
-  IterativeDepthFirstVisit(graph, pre_visit, non_tree_visit, post_visit);
-  return answer;
-}
-
-inline std::unique_ptr<Graph> DeriveDFSTree(const Graph &graph) {
-  auto tree = std::unique_ptr<Graph>(new Graph(graph.size));
-  auto pre_visit = [&](unsigned parent, unsigned u) {
-    if (parent != UNDEF)
-      tree->AddEdge(parent, u);
-  };
-  auto non_tree_visit = [&](unsigned u, unsigned v) {};
-  auto post_visit = [&](unsigned u, unsigned parent) {};
-  IterativeDepthFirstVisit(graph, pre_visit, non_tree_visit, post_visit);
-  return tree;
-}
 
 class Random {
 public:
@@ -169,38 +31,267 @@ private:
   std::uniform_int_distribution<int64_t> int_distribution_;
 };
 
-inline std::unique_ptr<Graph> GenerateRandomGraph(size_t num_vertexes,
-                                                  size_t num_edges) {
-  auto g = std::make_unique<Graph>(num_vertexes);
-  size_t c = std::min(num_edges, num_vertexes * (num_vertexes - 1) / 2);
-  Random rnd(time(nullptr));
-  while (c) {
-    unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_vertexes,
-             v = static_cast<unsigned>(rnd.NextInt()) % num_vertexes;
-    if (g->AddEdge(u, v)) {
-      --c;
-    }
-  }
-  return g;
-}
-
-inline std::unique_ptr<Graph> GenerateRandomDirectedGraph(size_t num_vertexes,
-                                                          size_t num_edges) {
-  auto g = std::make_unique<Graph>(num_vertexes, true);
-  size_t c = std::min(num_edges, num_vertexes * num_vertexes);
-  Random rnd(time(nullptr));
-  while (c) {
-    unsigned u = static_cast<unsigned>(rnd.NextInt()) % num_vertexes,
-             v = static_cast<unsigned>(rnd.NextInt()) % num_vertexes;
-    if (g->AddEdge(u, v)) {
-      --c;
-    }
-  }
-  return g;
-}
-
-inline unsigned CountLeadingZeros(uint64_t x) { return __builtin_clz(x); }
+inline unsigned CountLeadingZeros(uint64_t x) { return __builtin_clzl(x); }
 
 inline unsigned Log2Ceil(uint64_t x) { return 64 - CountLeadingZeros(x - 1); }
 
 inline unsigned Log2Floor(uint64_t x) { return 63 - CountLeadingZeros(x); }
+
+static constexpr unsigned UNDEF = ~0U;
+
+template <bool IsDirected = true> class SimpleGraph {
+public:
+  using Vertex = uint32_t;
+  static constexpr Vertex UNDEF = ~(Vertex(0));
+
+private:
+  Vertex entry_;
+  std::vector<std::unordered_set<Vertex>> succ_, pred_;
+
+public:
+  using SuccConstIterator = decltype(succ_[0].cbegin());
+
+  explicit SimpleGraph(size_t size) : entry_(UNDEF), succ_(size), pred_(size) {}
+
+  SimpleGraph &AddEdge(Vertex u, Vertex v) {
+    assert(u < succ_.size() && v < succ_.size() && "Vertex out of bound");
+    succ_[u].insert(v);
+    pred_[v].insert(u);
+    if (!IsDirected) {
+      succ_[v].insert(u);
+      pred_[u].insert(v);
+    }
+    return *this;
+  }
+
+  SimpleGraph &RemoveEdge(Vertex u, Vertex v) {
+    assert(u < succ_.size() && v < succ_.size() && "Vertex out of bound");
+    succ_[u].erase(v);
+    pred_[v].erase(u);
+    if (!IsDirected) {
+      succ_[v].erase(u);
+      pred_[u].erase(v);
+    }
+    return *this;
+  }
+
+  SimpleGraph &SetEntry(Vertex u) {
+    entry_ = u;
+    return *this;
+  }
+
+  size_t size() const { return succ_.size(); }
+
+  auto succ(Vertex u) const {
+    assert(u < succ_.size() && "Vertex out of bound");
+    return std::ranges::subrange(succ_[u]);
+  }
+
+  auto pred(Vertex v) const {
+    assert(v < pred_.size() && "Vertex out of bound");
+    return std::ranges::subrange(pred_[v]);
+  }
+
+  bool empty() const { return size() == 0; }
+
+  bool HasEntry() const { return entry_ != UNDEF; }
+
+  bool HasEdge(Vertex u, const Vertex v) const { return succ_[u].count(v); }
+
+  constexpr bool directed() const { return IsDirected; }
+
+  Vertex entry() const { return entry_; }
+
+  auto all_vertex() const {
+    std::vector<Vertex> vs(size());
+    std::iota(vs.begin(), vs.end(), 0);
+    return vs;
+  }
+
+  template <typename V> void Visit(V &visitor) const { visitor.Visit(*this); }
+
+  using EdgeVisitor = std::function<void(Vertex, Vertex)>;
+
+  class DepthFirstVisitor {
+  public:
+    EdgeVisitor tree_visit = nullptr, non_tree_visit = nullptr,
+                post_visit = nullptr;
+
+    void Visit(const SimpleGraph &graph) {
+      visited_.clear();
+      states_.clear();
+      if (graph.HasEntry())
+        return Visit(graph, graph.entry());
+      for (Vertex u : graph.all_vertex())
+        Visit(graph, u);
+    }
+
+  private:
+    struct VisitState {
+      Vertex parent, current;
+      SuccConstIterator next, end;
+    };
+    std::unordered_set<Vertex> visited_;
+    std::vector<VisitState> states_;
+
+    void Visit(const SimpleGraph &graph, Vertex start) {
+      if (visited_.count(start))
+        return;
+      auto succ_range = graph.succ(start);
+      states_.emplace_back(
+          VisitState{UNDEF, start, succ_range.begin(), succ_range.end()});
+      while (!states_.empty()) {
+        VisitState &s = states_.back();
+        if (!visited_.count(s.current)) {
+          if (tree_visit)
+            tree_visit(s.parent, s.current);
+          visited_.insert(s.current);
+        }
+        for (; s.next != s.end; ++s.next) {
+          Vertex succ = *s.next;
+          assert(succ < graph.size() && "Vertex out of bound");
+          if (visited_.count(succ)) {
+            if (non_tree_visit)
+              non_tree_visit(s.current, succ);
+          } else
+            break;
+        }
+        if (s.next == s.end) {
+          if (post_visit)
+            post_visit(s.current, s.parent);
+          states_.pop_back();
+          continue;
+        }
+        Vertex succ = *s.next;
+        ++s.next;
+        assert(succ < graph.size() && "Vertex out of bound");
+        assert(!visited_.count(succ) && "Should not have visted");
+        states_.emplace_back(VisitState{
+            s.current, succ, graph.succ(succ).begin(), graph.succ(succ).end()});
+      }
+    }
+  };
+
+  class BreadthFirstVisitor {
+  public:
+    EdgeVisitor tree_visit = nullptr;
+
+    void Visit(const SimpleGraph &graph) {
+      visited_.clear();
+      if (graph.HasEntry())
+        return Visit(graph, graph.entry());
+      for (Vertex u : graph.all_vertex())
+        Visit(graph, u);
+    }
+
+  private:
+    std::unordered_set<Vertex> visited_;
+    std::queue<std::pair<Vertex, Vertex>> worklist_;
+
+    void Visit(const SimpleGraph &graph, Vertex start) {
+      if (visited_.count(start))
+        return;
+      worklist_.push({UNDEF, start});
+      while (!worklist_.empty()) {
+        auto u = worklist_.front();
+        worklist_.pop();
+        if (visited_.count(u.second))
+          continue;
+        if (tree_visit)
+          tree_visit(u.first, u.second);
+        visited_.insert(u.second);
+        for (Vertex v : graph.succ(u.second)) {
+          if (!visited_.count(v))
+            worklist_.push({u.second, v});
+        }
+      }
+    }
+  };
+
+  static void RandomGraph(SimpleGraph &graph, size_t edges_to_add) {
+    size_t max_edges = graph.size() * (graph.size() - 1);
+    if (!graph.directed())
+      max_edges /= 2;
+    edges_to_add = std::min(max_edges, edges_to_add);
+    Random rnd(time(nullptr));
+    while (edges_to_add) {
+      Vertex u = Vertex(rnd.NextInt() % graph.size());
+      Vertex v = Vertex(rnd.NextInt() % graph.size());
+      if (!graph.HasEdge(u, v)) {
+        graph.AddEdge(u, v);
+        --edges_to_add;
+      }
+    }
+  }
+
+  static bool IsDAG(const SimpleGraph &graph) {
+    if (!graph.directed())
+      return false;
+    bool answer = true;
+    uint32_t dfo = 0, dpo = 0;
+    const size_t size = graph.size();
+    std::vector<uint32_t> DFO(size, ~0U), DPO(size, ~0U);
+    DepthFirstVisitor DFV;
+    DFV.non_tree_visit = [&](Vertex u, Vertex v) {
+      if (DFO[v] <= DFO[u] && DPO[v] == ~0U)
+        answer = false;
+    };
+    DFV.tree_visit = [&](Vertex parent, Vertex u) { DFO[u] = dfo++; };
+    DFV.post_visit = [&](Vertex u, Vertex parent) { DPO[u] = dpo++; };
+    graph.Visit(DFV);
+    return answer;
+  }
+
+  static void DeriveDFSTree(SimpleGraph &graph, SimpleGraph<false> &tree) {
+    DepthFirstVisitor DFV;
+    DFV.tree_visit = [&](Vertex parent, Vertex u) {
+      if (parent != UNDEF)
+        tree.AddEdge(parent, u);
+    };
+    graph.Visit(DFV);
+  }
+
+  static void DeriveBFSTree(SimpleGraph &graph, SimpleGraph<false> &tree) {
+    BreadthFirstVisitor BFV;
+    BFV.tree_visit = [&](Vertex parent, Vertex u) {
+      if (parent != UNDEF)
+        tree.AddEdge(parent, u);
+    };
+    graph.Visit(BFV);
+  }
+
+  static void DepthFirstLabel(const SimpleGraph &graph,
+                              std::vector<Vertex> *tree_parent,
+                              std::vector<unsigned> *RPO,
+                              std::vector<unsigned> *DFO,
+                              std::vector<unsigned> *DPO) {
+    unsigned dfo = 0, dpo = 0;
+    const size_t size = graph.size();
+    if (tree_parent)
+      tree_parent->resize(size, UNDEF);
+    if (RPO)
+      RPO->resize(size, UNDEF);
+    if (DFO)
+      DFO->resize(size, UNDEF);
+    if (DPO)
+      DPO->resize(size, UNDEF);
+    DepthFirstVisitor DFV;
+    DFV.tree_visit = [&](Vertex parent, Vertex u) {
+      if (tree_parent)
+        tree_parent->at(u) = parent;
+      if (DFO)
+        DFO->at(u) = dfo++;
+    };
+    DFV.post_visit = [&](Vertex u, Vertex parent) {
+      if (RPO)
+        RPO->at(u) = size - 1 - dpo;
+      if (DPO)
+        DPO->at(u) = dpo++;
+    };
+    graph.Visit(DFV);
+  }
+};
+
+using DirectedGraph = SimpleGraph<true>;
+
+using UndirectedGraph = SimpleGraph<false>;

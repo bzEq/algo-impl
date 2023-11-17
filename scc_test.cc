@@ -5,14 +5,14 @@
 #include <gtest/gtest.h>
 
 struct SCC {
-  const Graph &graph;
+  const DirectedGraph &graph;
   const size_t size;
   std::vector<unsigned> lowest_ancestor, dfo, tree_parent;
   std::vector<std::set<unsigned>> sccs;
   std::function<bool(unsigned, unsigned)> dfs_less;
 
-  SCC(const Graph &graph)
-      : graph(graph), size(graph.size), lowest_ancestor(size, UNDEF),
+  SCC(const DirectedGraph &graph)
+      : graph(graph), size(graph.size()), lowest_ancestor(size, UNDEF),
         dfo(size, UNDEF), tree_parent(size, UNDEF), sccs(size),
         dfs_less([this](unsigned u, unsigned v) { return dfo[u] < dfo[v]; }) {}
 
@@ -20,19 +20,20 @@ struct SCC {
     std::vector<unsigned> scc_stack;
     std::vector<bool> instack(size, false);
     unsigned depth_first_order = 0;
-    auto pre_visit = [&, this](unsigned parent, unsigned u) {
+    DirectedGraph::DepthFirstVisitor DFV;
+    DFV.tree_visit = [&, this](unsigned parent, unsigned u) {
       dfo[u] = depth_first_order++;
       tree_parent[u] = parent;
       lowest_ancestor[u] = u;
       scc_stack.push_back(u);
       instack[u] = true;
     };
-    auto non_tree_visit = [&, this](unsigned u, unsigned v) {
+    DFV.non_tree_visit = [&, this](unsigned u, unsigned v) {
       assert(dfo[u] != UNDEF && dfo[v] != UNDEF);
       if (instack[v])
         lowest_ancestor[u] = std::min(lowest_ancestor[u], v, dfs_less);
     };
-    auto post_visit = [&, this](unsigned u, unsigned parent) {
+    DFV.post_visit = [&, this](unsigned u, unsigned parent) {
       if (parent != UNDEF) {
         lowest_ancestor[parent] =
             std::min(lowest_ancestor[u], lowest_ancestor[parent], dfs_less);
@@ -51,7 +52,7 @@ struct SCC {
         sccs[u].insert(v);
       }
     };
-    IterativeDepthFirstVisit(graph, pre_visit, non_tree_visit, post_visit);
+    graph.Visit(DFV);
     CompressLowestAncestor();
   }
 
@@ -69,12 +70,12 @@ struct SCC {
     }
   }
 
-  std::unique_ptr<Graph> DeriveDAG() {
-    auto dag = std::unique_ptr<Graph>(new Graph(size, true));
+  std::unique_ptr<DirectedGraph> DeriveDAG() {
+    auto dag = std::make_unique<DirectedGraph>(size);
     for (unsigned u = 0; u < size; ++u) {
       unsigned U = lowest_ancestor[u];
       assert(lowest_ancestor[U] == U);
-      for (unsigned v : graph.succ[u]) {
+      for (unsigned v : graph.succ(u)) {
         unsigned V = lowest_ancestor[v];
         assert(lowest_ancestor[V] == V);
         if (U != V)
@@ -88,7 +89,7 @@ struct SCC {
 namespace {
 
 TEST(SCCTest, Graph0) {
-  Graph g(5, true);
+  DirectedGraph g(5);
   g.AddEdge(0, 1);
   g.AddEdge(1, 2);
   g.AddEdge(2, 3);
@@ -105,7 +106,7 @@ TEST(SCCTest, Graph0) {
 }
 
 TEST(SCCTest, Graph1) {
-  Graph g(6, true);
+  DirectedGraph g(6);
   g.AddEdge(0, 1);
   g.AddEdge(1, 2);
   g.AddEdge(2, 3);
@@ -121,7 +122,7 @@ TEST(SCCTest, Graph1) {
 }
 
 TEST(SCCTest, DAGTest0) {
-  Graph g(6, true);
+  DirectedGraph g(6);
   g.AddEdge(0, 1);
   g.AddEdge(1, 2);
   g.AddEdge(2, 3);
@@ -129,24 +130,25 @@ TEST(SCCTest, DAGTest0) {
   g.AddEdge(4, 1);
   g.AddEdge(0, 5);
   g.AddEdge(5, 4);
-  EXPECT_TRUE(not IsDAG(g));
+  EXPECT_TRUE(not DirectedGraph::IsDAG(g));
 }
 
 TEST(SCCTest, DAGTest1) {
-  Graph g(7, true);
+  DirectedGraph g(7);
   g.AddEdge(0, 1);
   g.AddEdge(1, 2);
   g.AddEdge(2, 3);
   g.AddEdge(3, 4);
   g.AddEdge(4, 5);
   g.AddEdge(0, 5);
-  EXPECT_TRUE(IsDAG(g));
+  EXPECT_TRUE(DirectedGraph::IsDAG(g));
 }
 
 TEST(SCCTest, RandomCFG) {
   const unsigned n = 100000, m = 300000;
-  auto g = GenerateRandomDirectedGraph(n, m);
-  SCC scc(*g);
+  DirectedGraph g(n);
+  DirectedGraph::RandomGraph(g, m);
+  SCC scc(g);
   scc.Calculate();
   for (unsigned u = 0; u < n; ++u) {
     EXPECT_TRUE(u == scc.lowest_ancestor[u] ||
@@ -155,7 +157,7 @@ TEST(SCCTest, RandomCFG) {
     EXPECT_TRUE(scc.lowest_ancestor[p] == p);
   }
   auto dag = scc.DeriveDAG();
-  EXPECT_TRUE(IsDAG(*dag));
+  EXPECT_TRUE(DirectedGraph::IsDAG(*dag));
 }
 
 } // namespace

@@ -5,7 +5,7 @@ cc_test(
         'core.h',
     ],
     copts=[
-        '-std=c++14',
+        '-std=c++20',
         '-O3',
         '-march=native',
         '-Wall',
@@ -26,7 +26,7 @@ cc_test(
         'core.h',
     ],
     copts=[
-        '-std=c++14',
+        '-std=c++20',
         '-O3',
         '-march=native',
         '-Wall',
@@ -47,7 +47,7 @@ cc_test(
         'core.h',
     ],
     copts=[
-        '-std=c++14',
+        '-std=c++20',
         '-O3',
         '-march=native',
         '-Wall',
@@ -68,7 +68,7 @@ cc_test(
         'core.h',
     ],
     copts=[
-        '-std=c++14',
+        '-std=c++20',
         '-O3',
         '-march=native',
         '-Wall',
@@ -89,7 +89,7 @@ cc_test(
         'core.h',
     ],
     copts=[
-        '-std=c++14',
+        '-std=c++20',
         '-O3',
         '-march=native',
         '-Wall',
@@ -110,8 +110,8 @@ cc_test(
         'core.h',
     ],
     copts=[
-        '-std=c++14',
-        '-O3',
+        '-std=c++20',
+        '-g',
         '-march=native',
         '-Wall',
         '-fno-rtti',
@@ -131,7 +131,7 @@ cc_test(
         'core.h',
     ],
     copts=[
-        '-std=c++14',
+        '-std=c++20',
         '-Ofast',
         '-march=native',
         '-Wall',
@@ -151,7 +151,7 @@ cc_test(
         'local_tworegalloc.cc',
     ],
     copts=[
-        '-std=c++14',
+        '-std=c++20',
         '-O3',
         '-march=native',
         '-Wall',
@@ -171,7 +171,7 @@ cc_test(
         'fenwicktree_test.cc',
     ],
     copts=[
-        '-std=c++14',
+        '-std=c++20',
         '-O3',
         '-march=native',
         '-Wall',
