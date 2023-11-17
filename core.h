@@ -9,7 +9,6 @@
 #include <set>
 #include <time.h>
 #include <vector>
-#include <x86intrin.h>
 
 static constexpr unsigned UNDEF = ~0U;
 
@@ -200,7 +199,7 @@ inline std::unique_ptr<Graph> GenerateRandomDirectedGraph(size_t num_vertexes,
   return g;
 }
 
-inline unsigned CountLeadingZeros(uint64_t x) { return _lzcnt_u64(x); }
+inline unsigned CountLeadingZeros(uint64_t x) { return __builtin_clz(x); }
 
 inline unsigned Log2Ceil(uint64_t x) { return 64 - CountLeadingZeros(x - 1); }
 
