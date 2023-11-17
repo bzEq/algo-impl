@@ -60,10 +60,10 @@ struct LCA {
             assert(Covers(v, u));
             assert(Covers(label[0], v));
             if (o - 1 < ancestor[v].size()) {
-              assert(height[u] >= (1 << (o - 1)));
+              assert(height[u] >= (1UL << (o - 1)));
               ancestor[u][o] = ancestor[v][o - 1];
             } else {
-              assert(height[u] < (1 << o));
+              assert(height[u] < (1UL << o));
             }
           }
         }
