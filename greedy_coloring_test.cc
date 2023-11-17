@@ -12,6 +12,7 @@ struct GreedyColoring {
   void Coloring() {
     UndirectedGraph::BreadthFirstVisitor BFV;
     BFV.tree_visit = [&](UndirectedGraph::Vertex _, UndirectedGraph::Vertex u) {
+      assert(colors[u] == UNDEF);
       std::unordered_set<unsigned> used_colors;
       for (UndirectedGraph::Vertex v : graph.succ(u)) {
         if (colors[v] != UNDEF)
