@@ -29,8 +29,10 @@ struct GreedyColoring {
 
   size_t NumColors() const {
     std::unordered_set<unsigned> used_colors;
-    for (UndirectedGraph::Vertex u : graph.all_vertex())
+    for (UndirectedGraph::Vertex u : graph.all_vertex()) {
+      assert(colors[u] != UNDEF);
       used_colors.insert(colors[u]);
+    }
     return used_colors.size();
   }
 };
