@@ -1,5 +1,7 @@
 // Copyright (c) 2020 Kai Luo <gluokai@gmail.com>. All rights reserved.
 
+#pragma once
+
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
