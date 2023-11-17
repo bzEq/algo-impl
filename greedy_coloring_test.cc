@@ -74,7 +74,7 @@ TEST(GCTest, CompleteGraph) {
 
 TEST(GCTest, Random) {
   UndirectedGraph g(1UL << 16);
-  UndirectedGraph::RandomGraph(g, 1UL << 20);
+  UndirectedGraph::RandomGraph(g, 1UL << 22);
   GreedyColoring GC(g);
   GC.Coloring();
   std::cout << GC.NumColors() << "\n";
