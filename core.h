@@ -297,3 +297,10 @@ public:
 using DirectedGraph = SimpleGraph<true>;
 
 using UndirectedGraph = SimpleGraph<false>;
+
+template<bool IsDirected = true>
+SimpleGraph<IsDirected> CreateRandomSimpleGraph(size_t num_vertex, size_t num_edges) {
+  SimpleGraph<IsDirected> G(num_vertex);
+  SimpleGraph<IsDirected>::RandomGraph(G, num_edges);
+  return G;
+}
