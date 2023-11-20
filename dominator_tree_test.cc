@@ -18,7 +18,7 @@ struct DominatorTree {
   DominatorTree(const DirectedGraph &graph)
       : cfg(graph), size(cfg.size()), semi(size, UNDEF), idom(size, UNDEF),
         lt_ancestor(size, UNDEF), best(size, UNDEF), dominance_frontier(size),
-        lt_bucket(size), dfs_less([this](const unsigned u, const unsigned v) {
+        lt_bucket(size), dfs_less([this](Vertex u, Vertex v) {
           return dfo[u] < dfo[v];
         }),
         dfs_greater([this](Vertex u, Vertex v) {
@@ -316,7 +316,7 @@ TEST(DominatorTreeTest, WeirdGraph) {
   DominatorTree dt1(g);
   dt.CalculateDTViaSLT();
   dt1.CalculateDTViaDataFlow();
-  for (unsigned u = 0; u < 4; ++u) {
+  for (auto u : g.all_vertex()) {
     // std::cout << dt.idom[u] << " " << dt1.idom[u] << "\n";
     EXPECT_TRUE(dt.idom[u] == dt1.idom[u]);
   }
@@ -331,7 +331,7 @@ TEST(DominatorTreeTest, RandomCFG) {
   DominatorTree dt1(g);
   dt.CalculateDTViaSLT();
   dt1.CalculateDTViaDataFlow();
-  for (unsigned u = 0; u < n; ++u) {
+  for (auto u : g.all_vertex()) {
     // std::cout << dt.idom[u] << " " << dt1.idom[u] << "\n";
     EXPECT_TRUE(dt.idom[u] == dt1.idom[u]);
   }
