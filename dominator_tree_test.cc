@@ -9,10 +9,11 @@
 struct DominatorTree {
   const DirectedGraph &cfg;
   const size_t size;
+  using Vertex = DirectedGraph::Vertex;
   std::vector<unsigned> dfo, rpo, dfs_tree_parent, semi, idom, lt_ancestor,
       best;
-  std::vector<std::set<unsigned>> dominance_frontier, lt_bucket;
-  std::function<bool(unsigned, unsigned)> dfs_less, dfs_greater;
+  std::vector<std::set<Vertex>> dominance_frontier, lt_bucket;
+  std::function<bool(Vertex, Vertex)> dfs_less, dfs_greater;
 
   DominatorTree(const DirectedGraph &graph)
       : cfg(graph), size(cfg.size()), semi(size, UNDEF), idom(size, UNDEF),
@@ -20,24 +21,24 @@ struct DominatorTree {
         lt_bucket(size), dfs_less([this](const unsigned u, const unsigned v) {
           return dfo[u] < dfo[v];
         }),
-        dfs_greater([this](const unsigned u, const unsigned v) {
+        dfs_greater([this](Vertex u, Vertex v) {
           return dfo[u] > dfo[v];
         }) {
     assert(cfg.entry() == 0);
     DirectedGraph::DepthFirstLabel(cfg, &dfs_tree_parent, &rpo, &dfo, nullptr);
   }
 
-  void Link(unsigned u, unsigned v) {
+  void Link(Vertex u, Vertex v) {
     assert(u != UNDEF && v != UNDEF && dfo[u] < dfo[v]);
     lt_ancestor[v] = u;
     best[v] = v;
   }
 
-  unsigned Eval(unsigned v) {
-    unsigned a = lt_ancestor[v];
+  Vertex Eval(Vertex v) {
+    Vertex a = lt_ancestor[v];
     assert(a != UNDEF);
     if (lt_ancestor[a] != UNDEF) {
-      unsigned b = Eval(a);
+      Vertex b = Eval(a);
       lt_ancestor[v] = lt_ancestor[a];
       if (dfs_less(semi[b], semi[best[v]])) {
         best[v] = b;
@@ -47,7 +48,7 @@ struct DominatorTree {
     return best[v];
   }
 
-  bool ReachableFromOrigin(unsigned w) {
+  bool ReachableFromOrigin(Vertex w) {
     if (dfo[w] == UNDEF)
       return false;
     assert(dfo[0] != UNDEF && dfo[0] <= dfo[w]);
@@ -57,15 +58,15 @@ struct DominatorTree {
   // Simple Lengauer-Tarjan algorithm.
   void CalculateDTViaSLT() {
     idom[0] = 0;
-    std::vector<unsigned> worklist(size);
+    std::vector<Vertex> worklist(size);
     std::iota(worklist.begin(), worklist.end(), 0);
     std::sort(worklist.begin(), worklist.end(), dfs_greater);
-    for (unsigned w : worklist) {
+    for (Vertex w : worklist) {
       if (!ReachableFromOrigin(w) || dfs_tree_parent[w] == UNDEF)
         continue;
-      const unsigned p = dfs_tree_parent[w];
+      const Vertex p = dfs_tree_parent[w];
       semi[w] = p;
-      for (unsigned v : cfg.pred(w)) {
+      for (Vertex v : cfg.pred(w)) {
         if (!ReachableFromOrigin(v))
           continue;
         if (dfs_less(v, w)) {
@@ -77,9 +78,9 @@ struct DominatorTree {
       assert(semi[w] < size);
       Link(p, w);
       lt_bucket[semi[w]].insert(w);
-      for (unsigned v : lt_bucket[p]) {
+      for (Vertex v : lt_bucket[p]) {
         assert(semi[v] == p);
-        unsigned u = Eval(v);
+        Vertex u = Eval(v);
         if (dfs_less(semi[u], p))
           idom[v] = u;
         else
@@ -88,7 +89,7 @@ struct DominatorTree {
       lt_bucket[p].clear();
     }
     for (auto it = worklist.rbegin(); it != worklist.rend(); ++it) {
-      unsigned w = *it;
+      Vertex w = *it;
       if (semi[w] != UNDEF && idom[w] != semi[w]) {
         assert(idom[w] != UNDEF);
         idom[w] = idom[idom[w]];
@@ -96,7 +97,7 @@ struct DominatorTree {
     }
   }
 
-  unsigned CalculateNCA(unsigned u, unsigned v) {
+  Vertex CalculateNCA(Vertex u, Vertex v) {
     while (u != v) {
       while (dfs_greater(u, v))
         u = idom[u];
@@ -108,10 +109,10 @@ struct DominatorTree {
 
   void CalculateDTViaDataFlow() {
     idom[0] = 0;
-    std::vector<unsigned> worklist(size);
+    std::vector<Vertex> worklist(size);
     std::iota(worklist.begin(), worklist.end(), 0);
     std::sort(worklist.begin(), worklist.end(),
-              [this](unsigned u, unsigned v) { return rpo[u] < rpo[v]; });
+              [this](Vertex u, Vertex v) { return rpo[u] < rpo[v]; });
     bool changed = true;
     while (changed) {
       changed = false;
@@ -119,7 +120,7 @@ struct DominatorTree {
         if (!ReachableFromOrigin(u) || idom[u] == UNDEF)
           continue;
         for (auto v : cfg.succ(u)) {
-          unsigned new_idom = idom[v];
+          Vertex new_idom = idom[v];
           if (new_idom != UNDEF)
             new_idom = CalculateNCA(new_idom, u);
           else
@@ -136,14 +137,14 @@ struct DominatorTree {
   void CalculateDT() { CalculateDTViaSLT(); }
 
   void CalculateDF() {
-    for (unsigned u = 0; u < size; ++u) {
+    for (Vertex u : cfg.all_vertex()) {
       if (idom[u] == UNDEF)
         continue;
-      for (const unsigned v : cfg.succ(u)) {
+      for (Vertex v : cfg.succ(u)) {
         if (idom[v] == UNDEF)
           continue;
-        unsigned nca = CalculateNCA(u, v);
-        unsigned w = u;
+        Vertex nca = CalculateNCA(u, v);
+        Vertex w = u;
         while (w != nca) {
           dominance_frontier[w].insert(v);
           w = idom[w];
