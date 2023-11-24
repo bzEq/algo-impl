@@ -29,6 +29,8 @@ TEST(BitVectorTest, Basic) {
   EXPECT_TRUE(BV.test(1));
   EXPECT_TRUE(BV.test(64));
   EXPECT_FALSE(BV.test(4096));
+  BV.set(1UL << 20);
+  EXPECT_TRUE(BV.test(1UL << 20));
 }
 
 } // namespace
