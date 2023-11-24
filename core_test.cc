@@ -20,4 +20,15 @@ TEST(RandomGraphTest, BFS) {
   g.Visit(V);
 }
 
+TEST(BitVectorTest, Basic) {
+  BitVector BV;
+  EXPECT_FALSE(BV.test(0));
+  EXPECT_FALSE(BV.test(1));
+  BV.set(1);
+  BV.set(64);
+  EXPECT_TRUE(BV.test(1));
+  EXPECT_TRUE(BV.test(64));
+  EXPECT_FALSE(BV.test(4096));
+}
+
 } // namespace

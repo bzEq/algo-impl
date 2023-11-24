@@ -1,7 +1,7 @@
 cc_test(
-    name='random_graph_test',
+    name='core_test',
     srcs=[
-        'random_graph_test.cc',
+        'core_test.cc',
         'core.h',
     ],
     copts=[

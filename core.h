@@ -17,6 +17,32 @@
 #include <unordered_set>
 #include <vector>
 
+class BitVector {
+private:
+  using Unit = uint64_t;
+  static constexpr size_t UnitSizeInBits = sizeof(Unit) * 8;
+
+public:
+  bool test(size_t n) const {
+    size_t m = n / UnitSizeInBits;
+    if (m >= storage_.size())
+      return false;
+    size_t k = n % UnitSizeInBits;
+    return (1 << k) & storage_[m];
+  }
+
+  void set(size_t n) {
+    size_t m = n / UnitSizeInBits;
+    if (m >= storage_.size())
+      storage_.resize(m + 1);
+    size_t k = n % UnitSizeInBits;
+    storage_[m] |= 1 << k;
+  }
+
+private:
+  std::vector<Unit> storage_;
+};
+
 class Random {
 public:
   Random() : distribution_(0, 1) {}
