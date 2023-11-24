@@ -23,9 +23,7 @@ private:
   static constexpr size_t UnitSizeInBits = sizeof(Unit) * 8;
 
 public:
-  void clear() {
-    storage_.clear();
-  }
+  void clear() { storage_.clear(); }
 
   bool test(size_t n) const {
     size_t m = n / UnitSizeInBits;
