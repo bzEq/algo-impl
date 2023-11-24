@@ -23,12 +23,16 @@ private:
   static constexpr size_t UnitSizeInBits = sizeof(Unit) * 8;
 
 public:
+  void clear() {
+    storage_.clear();
+  }
+
   bool test(size_t n) const {
     size_t m = n / UnitSizeInBits;
     if (m >= storage_.size())
       return false;
     size_t k = n % UnitSizeInBits;
-    return (1 << k) & storage_[m];
+    return (1UL << k) & storage_[m];
   }
 
   void set(size_t n) {
@@ -36,7 +40,7 @@ public:
     if (m >= storage_.size())
       storage_.resize(m + 1);
     size_t k = n % UnitSizeInBits;
-    storage_[m] |= 1 << k;
+    storage_[m] |= 1UL << k;
   }
 
 private:
@@ -159,26 +163,26 @@ public:
       Vertex parent, current;
       SuccConstIterator next, end;
     };
-    std::unordered_set<Vertex> visited_;
+    BitVector visited_;
     std::vector<VisitState> states_;
 
     void Visit(const SimpleGraph &graph, Vertex start) {
-      if (visited_.count(start))
+      if (visited_.test(start))
         return;
       auto succ_range = graph.succ(start);
       states_.emplace_back(
           VisitState{UNDEF, start, succ_range.begin(), succ_range.end()});
       while (!states_.empty()) {
         VisitState &s = states_.back();
-        if (!visited_.count(s.current)) {
+        if (!visited_.test(s.current)) {
           if (tree_visit)
             tree_visit(s.parent, s.current);
-          visited_.insert(s.current);
+          visited_.set(s.current);
         }
         for (; s.next != s.end; ++s.next) {
           Vertex succ = *s.next;
           assert(succ < graph.size() && "Vertex out of bound");
-          if (visited_.count(succ)) {
+          if (visited_.test(succ)) {
             if (non_tree_visit)
               non_tree_visit(s.current, succ);
           } else
@@ -193,7 +197,7 @@ public:
         Vertex succ = *s.next;
         ++s.next;
         assert(succ < graph.size() && "Vertex out of bound");
-        assert(!visited_.count(succ) && "Should not have visted");
+        assert(!visited_.test(succ) && "Should not have visited");
         states_.emplace_back(VisitState{
             s.current, succ, graph.succ(succ).begin(), graph.succ(succ).end()});
       }
@@ -213,23 +217,23 @@ public:
     }
 
   private:
-    std::unordered_set<Vertex> visited_;
+    BitVector visited_;
     std::queue<std::pair<Vertex, Vertex>> worklist_;
 
     void Visit(const SimpleGraph &graph, Vertex start) {
-      if (visited_.count(start))
+      if (visited_.test(start))
         return;
       worklist_.push({UNDEF, start});
       while (!worklist_.empty()) {
         auto u = worklist_.front();
         worklist_.pop();
-        if (visited_.count(u.second))
+        if (visited_.test(u.second))
           continue;
         if (tree_visit)
           tree_visit(u.first, u.second);
-        visited_.insert(u.second);
+        visited_.set(u.second);
         for (Vertex v : graph.succ(u.second)) {
-          if (!visited_.count(v))
+          if (!visited_.test(v))
             worklist_.push({u.second, v});
         }
       }
