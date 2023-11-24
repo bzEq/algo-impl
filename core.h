@@ -41,6 +41,13 @@ public:
     storage_[m] |= 1UL << k;
   }
 
+  size_t CountOnes() const {
+    size_t ones = 0;
+    for (auto x : storage_)
+      ones += __builtin_popcountll(x);
+    return ones;
+  }
+
 private:
   std::vector<Unit> storage_;
 };

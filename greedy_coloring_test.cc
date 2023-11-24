@@ -13,27 +13,27 @@ struct GreedyColoring {
     UndirectedGraph::BreadthFirstVisitor BFV;
     BFV.tree_visit = [&](UndirectedGraph::Vertex _, UndirectedGraph::Vertex u) {
       assert(colors[u] == UNDEF);
-      std::unordered_set<unsigned> used_colors;
+      BitVector used_colors;
       for (UndirectedGraph::Vertex v : graph.succ(u)) {
         if (colors[v] != UNDEF)
-          used_colors.insert(colors[v]);
+          used_colors.set(colors[v]);
       }
       unsigned mex = 0;
-      while (used_colors.count(mex))
+      while (used_colors.test(mex))
         ++mex;
-      assert(!used_colors.count(mex));
+      assert(!used_colors.test(mex));
       colors[u] = mex;
     };
     graph.Visit(BFV);
   }
 
   size_t NumColors() const {
-    std::unordered_set<unsigned> used_colors;
+    BitVector used_colors;
     for (UndirectedGraph::Vertex u : graph.all_vertex()) {
       assert(colors[u] != UNDEF);
-      used_colors.insert(colors[u]);
+      used_colors.set(colors[u]);
     }
-    return used_colors.size();
+    return used_colors.CountOnes();
   }
 };
 
