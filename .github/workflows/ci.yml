@@ -14,6 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: install gtest
-      run: apt install googletest
+      run: sudo apt install -y googletest
     - name: test
       run: bazel test :all
