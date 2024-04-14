@@ -76,7 +76,8 @@ inline unsigned Log2Floor(uint64_t x) { return 63 - CountLeadingZeros(x); }
 
 static constexpr unsigned UNDEF = ~0U;
 
-template <bool IsDirected = true> class SimpleGraph {
+template <bool IsDirected = true>
+class SimpleGraph {
 public:
   using Vertex = uint32_t;
   static constexpr Vertex UNDEF = ~(Vertex(0));
@@ -145,7 +146,10 @@ public:
     return vs;
   }
 
-  template <typename V> void Visit(V &visitor) const { visitor.Visit(*this); }
+  template <typename V>
+  void Visit(V &visitor) const {
+    visitor.Visit(*this);
+  }
 
   using EdgeVisitor = std::function<void(Vertex, Vertex)>;
 
@@ -349,3 +353,11 @@ UndirectedGraph CreateRandomUndirectedGraph(size_t num_vertex,
                                             size_t num_edges) {
   return CreateRandomSimpleGraph<false>(num_vertex, num_edges);
 }
+
+struct LiveInterval {
+  size_t B, E;
+  bool Interfere(const LiveInterval &other) const {
+    assert(other.B <= other.E);
+    return !(E <= other.B || other.E <= B);
+  }
+};
