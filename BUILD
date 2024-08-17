@@ -125,27 +125,6 @@ cc_test(
 )
 
 cc_test(
-    name='hopfield_network_test',
-    srcs=[
-        'hopfield_network_test.cc',
-        'core.h',
-    ],
-    copts=[
-        '-std=c++20',
-        '-Ofast',
-        '-march=native',
-        '-Wall',
-        '-fno-rtti',
-        '-fno-exceptions',
-    ],
-    linkopts=[
-        '-lgtest_main',
-        '-lgtest',
-        '-pthread',
-    ],
-)
-
-cc_test(
     name='local_tworegalloc',
     srcs=[
         'local_tworegalloc.cc',
