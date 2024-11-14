@@ -1,5 +1,4 @@
 #![no_std]
 #![feature(test)]
-#![warn(dead_code)]
-
+#[allow(dead_code)]
 mod list;
