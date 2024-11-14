@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 mod singly_linked_list {
     extern crate alloc;
     use alloc::boxed::Box;
