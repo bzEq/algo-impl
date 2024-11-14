@@ -7,7 +7,7 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
+  test_cc:
 
     runs-on: ubuntu-latest
 
@@ -17,3 +17,15 @@ jobs:
       run: sudo apt install -y libgtest-dev
     - name: test
       run: bazel test :all
+
+  test_rs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: install rust
+      run: sudo apt install -y cargo
+    - name: test
+      run: cd rust && cargo t
+    - name: bench
+      run: cd rust && cargo bench
