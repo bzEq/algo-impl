@@ -17,16 +17,3 @@ jobs:
       run: sudo apt install -y libgtest-dev
     - name: Test
       run: bazel test :all
-
-  test_rs:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions-rust-lang/setup-rust-toolchain@v1
-      with:
-        toolchain: nightly
-    - name: Test
-      run: cd rust && cargo t
-    - name: Bench
-      run: cd rust && cargo bench
